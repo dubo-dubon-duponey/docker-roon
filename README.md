@@ -1,6 +1,6 @@
 # What
 
-This is a RoonBridge container for armv7.
+This is a RoonBridge container for armv7, based on debian:stretch-slim
 
 ## Run
 
@@ -11,7 +11,11 @@ docker run -d \
     dubodubonduponey/audio-raat:v1
 ```
 
-## Experiments
+## Notes
+
+### RoonBridge version
+
+Note that the download url of RoonBridge is not versioned, and you will get whatever they put online at that time.
 
 ### Alpine
 
@@ -45,3 +49,9 @@ COPY --from=build /log /log
 ```
 
 Feel free to submit a PR, as my interest is solely on armv7 for now.
+
+## TODO
+
+ * multi-arch
+ * move to alpine
+ * store pinned version of RoonBridge
