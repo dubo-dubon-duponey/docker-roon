@@ -1,0 +1,25 @@
+# Builder
+FROM debian:stretch-slim AS builder
+MAINTAINER dubodubonduponey@pm.me
+
+ARG TARGETPLATFORM
+
+RUN apt-get update -y && apt-get install -y curl bzip2 libasound2
+
+WORKDIR /build
+
+COPY "./roon-bits-cache/$TARGETPLATFORM/bridge.tar.bz2" .
+RUN tar -xjf bridge.tar.bz2
+
+RUN /build/RoonBridge/check.sh
+
+# Runner
+FROM debian:stretch-slim AS runner
+MAINTAINER dubodubonduponey@pm.me
+
+RUN apt-get update -y && apt-get install -y libasound2 \
+	      && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /dbdbdp
+COPY --from=builder /build/RoonBridge .
+ENTRYPOINT ["./Bridge/RoonBridge"]

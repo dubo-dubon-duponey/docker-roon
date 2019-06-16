@@ -1,0 +1,30 @@
+# Builder
+FROM debian:stretch-slim AS builder
+MAINTAINER dubodubonduponey@pm.me
+
+RUN apt-get update -y && apt-get install -y curl bzip2 libasound2 ffmpeg cifs-utils
+
+WORKDIR /build
+
+COPY "./roon-bits-cache/linux/amd64/server.tar.bz2" .
+RUN tar -xjf server.tar.bz2
+
+RUN /build/RoonServer/check.sh
+
+# Runner
+FROM debian:stretch-slim AS runner
+MAINTAINER dubodubonduponey@pm.me
+
+# cifs-utils: not using it for now - would also require additional permissions
+# and some extra complexity managing the mounts on container restart
+RUN apt-get update -y && apt-get install -y libasound2 ffmpeg \
+	      && rm -rf /var/lib/apt/lists/*
+
+# Not clear yet if this will work or if we need root
+# audio group?
+RUN adduser --disabled-password --disabled-login dbdbdp
+USER dbdbdp
+
+WORKDIR /dbdbdp
+COPY --from=builder /build/RoonServer .
+ENTRYPOINT ["./Server/RoonServer"]
