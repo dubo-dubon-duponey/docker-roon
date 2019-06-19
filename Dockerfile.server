@@ -20,6 +20,11 @@ MAINTAINER dubodubonduponey@pm.me
 RUN apt-get update -y && apt-get install -y libasound2 ffmpeg \
 	      && rm -rf /var/lib/apt/lists/*
 
+ENV ROON_DATAROOT /var/roon
+ENV ROON_ID_DIR /var/roon
+
+VOLUME [ "/var/roon", "/music" ]
+
 # Not clear yet if this will work or if we need root
 # audio group?
 RUN adduser --disabled-password --disabled-login dbdbdp
