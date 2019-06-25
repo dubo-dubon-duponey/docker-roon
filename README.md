@@ -30,7 +30,7 @@ IMAGE_OWNER=you ./build.sh
 
 ### Roon packages version
 
-The builder uses the packages stored under `roon-bits-cache`.
+The builder uses the packages stored under `cache`.
 
 If you want to rebuild with fresh versions, call the `./refresh.sh` script first 
 to redownload from Roon servers.
