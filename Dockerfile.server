@@ -1,5 +1,5 @@
 # Builder
-FROM debian:stretch-slim AS builder
+FROM debian:buster-slim AS builder
 MAINTAINER dubo-dubon-duponey@jsboot.space
 
 RUN apt-get update \
@@ -13,7 +13,7 @@ RUN tar -xjf server.tar.bz2
 RUN /build/RoonServer/check.sh
 
 # Runner
-FROM debian:stretch-slim AS runner
+FROM debian:buster-slim AS runner
 MAINTAINER dubo-dubon-duponey@jsboot.space
 
 # cifs-utils: not using it for now - would also require additional permissions

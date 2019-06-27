@@ -1,5 +1,5 @@
 # Builder
-FROM debian:stretch-slim AS builder
+FROM debian:buster-slim AS builder
 MAINTAINER dubo-dubon-duponey@jsboot.space
 
 ARG TARGETPLATFORM
@@ -14,7 +14,7 @@ RUN tar -xjf bridge.tar.bz2
 RUN /build/RoonBridge/check.sh
 
 # Runner
-FROM debian:stretch-slim AS runner
+FROM debian:buster-slim AS runner
 MAINTAINER dubo-dubon-duponey@jsboot.space
 
 RUN apt-get update \

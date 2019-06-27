@@ -1,6 +1,6 @@
 # What
 
-Docker images for Roon Bridge (armv7, arm64 and amd64) & Roon Server (amd64).
+Docker images for Roon Bridge (armv7, arm64 and amd64) & Roon Server (amd64), based on debian:buster-slim
 
 ## Run
 
