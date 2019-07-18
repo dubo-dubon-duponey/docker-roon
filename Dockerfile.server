@@ -1,41 +1,60 @@
-# Builder
-FROM debian:buster-slim AS builder
-MAINTAINER dubo-dubon-duponey@jsboot.space
+##########################
+# Building image
+##########################
+FROM        debian:buster-slim                                                                            AS builder
 
-RUN apt-get update \
-  && apt-get install -y curl bzip2 libasound2 ffmpeg cifs-utils
+MAINTAINER  dubo-dubon-duponey@jsboot.space
+# Install dependencies and tools
+ARG         DEBIAN_FRONTEND="noninteractive"
+ENV         TERM="xterm" LANG="C.UTF-8" LC_ALL="C.UTF-8"
+RUN         apt-get update                                                                                > /dev/null
+RUN         apt-get install -y curl bzip2 libasound2 ffmpeg cifs-utils                                    > /dev/null
+WORKDIR     /build
 
-WORKDIR /build
+COPY        "./cache/linux/amd64/server.tar.bz2" .
+RUN         tar -xjf server.tar.bz2
 
-COPY "./cache/linux/amd64/server.tar.bz2" .
-RUN tar -xjf server.tar.bz2
+RUN         /build/RoonServer/check.sh
 
-RUN /build/RoonServer/check.sh
+#######################
+# Running image
+#######################
+FROM        debian:buster-slim
 
-# Runner
-FROM debian:buster-slim AS runner
-MAINTAINER dubo-dubon-duponey@jsboot.space
+MAINTAINER  dubo-dubon-duponey@jsboot.space
+ARG         DEBIAN_FRONTEND="noninteractive"
+ENV         TERM="xterm" LANG="C.UTF-8" LC_ALL="C.UTF-8"
+RUN         apt-get update              > /dev/null && \
+            apt-get dist-upgrade -y                 && \
+            apt-get install -y --no-install-recommends libasound2 ffmpeg \
+                                        > /dev/null && \
+            apt-get -y autoremove       > /dev/null && \
+            apt-get -y clean            && \
+            rm -rf /var/lib/apt/lists/* && \
+            rm -rf /tmp/*               && \
+            rm -rf /var/tmp/*
+
+WORKDIR     /dubo-dubon-duponey
+
+COPY        --from=builder /build/RoonServer .
+
+ENV         ROON_DATAROOT /var/roon
+ENV         ROON_ID_DIR /var/roon
+
+EXPOSE      9003/UDP
+EXPOSE      9100-9200/TCP
+
+# TCP/IP Port 52667 / TCP/IP Port 52709 / TCP/IP Ports 63098-63100 and TCP/IP Port 49863
+VOLUME      "/var/roon"
+VOLUME      "/music"
+
+ENTRYPOINT  ["./Server/RoonServer"]
 
 # cifs-utils: not using it for now - would also require additional permissions
 # and some extra complexity managing the mounts on container restart
-RUN apt-get update \
-  && apt-get install -y --no-install-recommends libasound2 ffmpeg \
-  && rm -rf /tmp/* /var/lib/apt/lists/* /var/tmp/*
 
 # Not clear yet if this will work or if we need root
 # audio group?
 #RUN adduser --disabled-password --disabled-login dbdbdp
 #USER dbdbdp
 
-WORKDIR /dubo-dubon-duponey
-COPY --from=builder /build/RoonServer .
-
-ENV ROON_DATAROOT /var/roon
-ENV ROON_ID_DIR /var/roon
-EXPOSE 9003/UDP
-EXPOSE 9100-9200/TCP
-# TCP/IP Port 52667 / TCP/IP Port 52709 / TCP/IP Ports 63098-63100 and TCP/IP Port 49863
-VOLUME "/var/roon"
-VOLUME "/music"
-
-ENTRYPOINT ["./Server/RoonServer"]

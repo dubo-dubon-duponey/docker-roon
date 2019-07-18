@@ -1,31 +1,44 @@
-# Builder
-FROM debian:buster-slim AS builder
-MAINTAINER dubo-dubon-duponey@jsboot.space
+##########################
+# Building image
+##########################
+FROM        debian:buster-slim                                                                            AS builder
 
-ARG TARGETPLATFORM
+MAINTAINER  dubo-dubon-duponey@jsboot.space
+# Install dependencies and tools
+ARG         DEBIAN_FRONTEND="noninteractive"
+ENV         TERM="xterm" LANG="C.UTF-8" LC_ALL="C.UTF-8"
+RUN         apt-get update                                                                                > /dev/null
+RUN         apt-get install -y git bzip2 libasound2                                                       > /dev/null
+WORKDIR     /build
 
-RUN apt-get update && apt-get install -y bzip2 libasound2
+COPY        "./cache/$TARGETPLATFORM/bridge.tar.bz2" .
+RUN         tar -xjf bridge.tar.bz2
 
-WORKDIR /build
+RUN         /build/RoonBridge/check.sh
 
-COPY "./cache/$TARGETPLATFORM/bridge.tar.bz2" .
-RUN tar -xjf bridge.tar.bz2
+#######################
+# Running image
+#######################
+FROM        debian:buster-slim
 
-RUN /build/RoonBridge/check.sh
+MAINTAINER  dubo-dubon-duponey@jsboot.space
+ARG         DEBIAN_FRONTEND="noninteractive"
+ENV         TERM="xterm" LANG="C.UTF-8" LC_ALL="C.UTF-8"
+RUN         apt-get update              > /dev/null && \
+            apt-get dist-upgrade -y                 && \
+            apt-get install -y --no-install-recommends libasound2 \
+                                        > /dev/null && \
+            apt-get -y autoremove       > /dev/null && \
+            apt-get -y clean            && \
+            rm -rf /var/lib/apt/lists/* && \
+            rm -rf /tmp/*               && \
+            rm -rf /var/tmp/*
 
-# Runner
-FROM debian:buster-slim AS runner
-MAINTAINER dubo-dubon-duponey@jsboot.space
+WORKDIR     /dubo-dubon-duponey
 
-RUN apt-get update \
-  && apt-get install -y --no-install-recommends libasound2 \
-  && rm -rf /tmp/* /var/lib/apt/lists/* /var/tmp/*
+COPY        --from=builder /build/RoonBridge .
 
-WORKDIR /dubo-dubon-duponey
+EXPOSE      9003/UDP
+EXPOSE      9100-9200/TCP
 
-COPY --from=builder /build/RoonBridge /dubo-dubon-duponey
-
-EXPOSE 9003/UDP
-EXPOSE 9100-9200/TCP
-
-ENTRYPOINT ["./Bridge/RoonBridge"]
+ENTRYPOINT  ["./Bridge/RoonBridge"]
