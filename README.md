@@ -16,6 +16,19 @@ docker run -d \
     dubodubonduponey/audio-roon-server:v1
 ```
 
+## GOTCHA
+
+Debian by default limits inotify watches to 8192, which might turns out to be too little.
+
+You probably want to bump that up to prevent your system from crashing / rebooting...
+
+Typically:      
+
+```bash
+echo "fs.inotify.max_user_watches = 1048576" > /etc/sysctl.conf
+echo 1048576 > /proc/sys/fs/inotify/max_user_watches
+```
+
 ## Notes
 
 ### Building your own

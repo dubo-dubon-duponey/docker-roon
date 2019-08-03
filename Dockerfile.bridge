@@ -42,3 +42,6 @@ EXPOSE      9003/UDP
 EXPOSE      9100-9200/TCP
 
 ENTRYPOINT  ["./Bridge/RoonBridge"]
+
+
+# XXX /root/.RAATServer <- get this outside the container (see rooncore for info)
