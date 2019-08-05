@@ -11,6 +11,7 @@ RUN         apt-get update                                                      
 RUN         apt-get install -y git bzip2 libasound2                                                       > /dev/null
 WORKDIR     /build
 
+ARG         TARGETPLATFORM
 COPY        "./cache/$TARGETPLATFORM/bridge.tar.bz2" .
 RUN         tar -xjf bridge.tar.bz2
 

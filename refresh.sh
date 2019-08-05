@@ -21,8 +21,16 @@ geturl(){
 
 for platform in linux/amd64 linux/arm64 linux/arm/v7; do
   mkdir -p ./cache/"$platform"
-  curl -fsSL -o ./cache/"$platform"/bridge.tar.bz2 "$(geturl "${platform}")"
+  if ! curl -fsSL -o ./cache/"$platform"/bridge.tar.bz2 "$(geturl "${platform}")"; then
+    rm -f ./cache/"$platform"/bridge.tar.bz2
+    echo "Failed to download bits!"
+    exit 1
+  fi
 done
 
 mkdir -p ./cache/linux/amd64
-curl -fsSL -o ./cache/linux/amd64/server.tar.bz2 "http://download.roonlabs.com/builds/RoonServer_linuxx64.tar.bz2"
+if ! curl -fsSL -o ./cache/linux/amd64/server.tar.bz2 "http://download.roonlabs.com/builds/RoonServer_linuxx64.tar.bz2"; then
+  rm -f ./cache/linux/amd64/server.tar.bz2
+  echo "Failed to download bits!"
+  exit 1
+fi
