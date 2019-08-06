@@ -3,12 +3,11 @@
 ##########################
 FROM        debian:buster-slim                                                                            AS builder
 
-MAINTAINER  dubo-dubon-duponey@jsboot.space
 # Install dependencies and tools
 ARG         DEBIAN_FRONTEND="noninteractive"
 ENV         TERM="xterm" LANG="C.UTF-8" LC_ALL="C.UTF-8"
 RUN         apt-get update                                                                                > /dev/null
-RUN         apt-get install -y git bzip2 libasound2                                                       > /dev/null
+RUN         apt-get install -y --no-install-recommends bzip2=1.0.6-9.1 libasound2=1.1.8-1  > /dev/null
 WORKDIR     /build
 
 ARG         TARGETPLATFORM
@@ -22,12 +21,12 @@ RUN         /build/RoonBridge/check.sh
 #######################
 FROM        debian:buster-slim
 
-MAINTAINER  dubo-dubon-duponey@jsboot.space
+LABEL       dockerfile.copyright="Dubo Dubon Duponey <dubo-dubon-duponey@jsboot.space>"
+
 ARG         DEBIAN_FRONTEND="noninteractive"
 ENV         TERM="xterm" LANG="C.UTF-8" LC_ALL="C.UTF-8"
 RUN         apt-get update              > /dev/null && \
-            apt-get dist-upgrade -y                 && \
-            apt-get install -y --no-install-recommends libasound2 \
+            apt-get install -y --no-install-recommends libasound2=1.1.8-1 \
                                         > /dev/null && \
             apt-get -y autoremove       > /dev/null && \
             apt-get -y clean            && \
