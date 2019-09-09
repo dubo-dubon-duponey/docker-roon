@@ -16,7 +16,7 @@ geturl(){
       url="armv7hf"
     ;;
   esac
-  printf "http://download.roonlabs.com/builds/RoonBridge_linux$url.tar.bz2"
+  printf "http://download.roonlabs.com/builds/RoonBridge_linux%s.tar.bz2" "$url"
 }
 
 for platform in linux/amd64 linux/arm64 linux/arm/v7; do
