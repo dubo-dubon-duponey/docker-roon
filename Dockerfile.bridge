@@ -38,10 +38,12 @@ WORKDIR     /dubo-dubon-duponey
 
 COPY        --from=builder /build/RoonBridge .
 
+ENV         ROON_DATAROOT /var/roon
+ENV         ROON_ID_DIR /var/roon
+
 EXPOSE      9003/UDP
 EXPOSE      9100-9200/TCP
 
+VOLUME      "/var/roon"
+
 ENTRYPOINT  ["./Bridge/RoonBridge"]
-
-
-# XXX /root/.RAATServer <- get this outside the container (see rooncore for info)
