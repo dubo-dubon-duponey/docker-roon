@@ -7,7 +7,7 @@ FROM        debian:buster-slim                                                  
 ARG         DEBIAN_FRONTEND="noninteractive"
 ENV         TERM="xterm" LANG="C.UTF-8" LC_ALL="C.UTF-8"
 RUN         apt-get update                                                                                > /dev/null
-RUN         apt-get install -y --no-install-recommends bzip2=1.0.6-9.1 libasound2=1.1.8-1  > /dev/null
+RUN         apt-get install -y --no-install-recommends bzip2=1.0.6-9.2~deb10u1 libasound2=1.1.8-1  > /dev/null
 WORKDIR     /build
 
 ARG         TARGETPLATFORM
