@@ -8,14 +8,14 @@ set -e
 
 helpers::dbus(){
   # On container restart, cleanup the crap
-  rm -f /var/run/dbus/pid
+  rm -f /run/dbus/pid
   # Not really useful, but then
   dbus-uuidgen --ensure
 
   # https://linux.die.net/man/1/dbus-daemon-1
   dbus-daemon --system
 
-  until [ -e /var/run/dbus/system_bus_socket ]; do
+  until [ -e /run/dbus/system_bus_socket ]; do
     sleep 1s
   done
 }
@@ -35,7 +35,7 @@ helpers::bluetooth(){
   bluetoothd --noplugin=sap -n &
   sleep 10
 
-  rm -f /var/run/bluealsa/hci0
+  rm -f /run/bluealsa/hci0
   bluealsa --device=hci0 &
   # Errrrrrrr
   sleep 10
