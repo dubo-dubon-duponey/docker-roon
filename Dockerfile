@@ -15,7 +15,6 @@ RUN           tar -xjf bridge.tar.bz2
 
 RUN           /dist/RoonBridge/check.sh
 
-
 ##########################
 # Building image server
 ##########################
@@ -34,6 +33,24 @@ COPY          "./cache/linux/amd64/server.tar.bz2" .
 RUN           tar -xjf server.tar.bz2
 
 RUN           /dist/RoonServer/check.sh
+RUN           ln -s /boot/RoonMono/bin/mono-sgen /dist/RoonServer/RoonMono/bin/RAATServer
+RUN           ln -s /boot/RoonMono/bin/mono-sgen /dist/RoonServer/RoonMono/bin/RoonAppliance
+RUN           ln -s /boot/RoonMono/bin/mono-sgen /dist/RoonServer/RoonMono/bin/RoonServer
+
+#######################
+# Extra builder for healthchecker
+#######################
+FROM          --platform=$BUILDPLATFORM dubodubonduponey/base:builder         AS builder-healthcheck
+
+ARG           HEALTH_VER=51ebf8ca3d255e0c846307bf72740f731e6210c3
+
+WORKDIR       $GOPATH/src/github.com/dubo-dubon-duponey/healthcheckers
+RUN           git clone git://github.com/dubo-dubon-duponey/healthcheckers .
+RUN           git checkout $HEALTH_VER
+RUN           arch="${TARGETPLATFORM#*/}"; \
+              env GOOS=linux GOARCH="${arch%/*}" go build -v -ldflags "-s -w" -o /dist/bin/http-health ./cmd/http
+
+RUN           chmod 555 /dist/bin/*
 
 #######################
 # Running image bridge
@@ -57,24 +74,17 @@ USER        dubo-dubon-duponey
 
 WORKDIR     /boot
 
-COPY        --from=builder-bridge /dist/RoonBridge .
+COPY        --from=builder-bridge       /dist/RoonBridge .
+# COPY        --from=builder-healthcheck  /dist/bin/http-health ./bin/
 
 ENV         ROON_DATAROOT /data
 ENV         ROON_ID_DIR /data
 
 EXPOSE      9003/udp
-EXPOSE      9100-9200/tcp
+EXPOSE      9100-9110/tcp
 
 VOLUME      /data
-
-ENTRYPOINT  ["./Bridge/RoonBridge"]
-
-
-# TODO: healthcheck - check the volume - move to readonly and finally spot the issue with identifiers
-
-
-# HEALTHCHECK --interval=30s --timeout=30s --start-period=10s --retries=1 CMD dnsgrpc dev-null.farcloser.world || exit 1
-# CMD dig @127.0.0.1 healthcheck.farcloser.world || exit 1
+VOLUME      /tmp
 
 #######################
 # Running image server
@@ -98,16 +108,20 @@ USER        dubo-dubon-duponey
 
 WORKDIR     /boot
 
-COPY        --from=builder-server /dist/RoonServer .
+COPY        --from=builder-server       /dist/RoonServer .
+COPY        --from=builder-healthcheck  /dist/bin/http-health ./bin/
 
 ENV         ROON_DATAROOT /data
 ENV         ROON_ID_DIR /data
 
 EXPOSE      9003/udp
-EXPOSE      9100-9200/tcp
+EXPOSE      9100-9110/tcp
 
-# TCP/IP Port 52667 / TCP/IP Port 52709 / TCP/IP Ports 63098-63100 and TCP/IP Port 49863
 VOLUME      /data
+VOLUME      /tmp
 VOLUME      /music
 
-ENTRYPOINT  ["./Server/RoonServer"]
+ENV         PATH=/boot/bin:$PATH
+
+ENV         HEALTHCHECK_URL=http://127.0.0.1:9100/healthcheck
+HEALTHCHECK --interval=30s --timeout=30s --start-period=10s --retries=1 CMD http-health || exit 1
