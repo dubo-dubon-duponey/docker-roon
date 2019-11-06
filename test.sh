@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -o errexit -o errtrace -o functrace -o nounset -o pipefail
 
 if ! hadolint ./*Dockerfile*; then
   >&2 printf "Failed linting on Dockerfile\n"
