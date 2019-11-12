@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -o errexit -o errtrace -o functrace -o nounset -o pipefail
 
 # This will re-download fresh versions of RoonBridge and Server
 # The purpose of this "cache" is to allow for reproducible builds with the exact same Roon software versions

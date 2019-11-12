@@ -1,19 +1,41 @@
 # What
 
-Docker images for Roon Bridge (armv7, arm64 and amd64) & Roon Server (amd64), based on debian:buster-slim
+Two Docker images for Roon Bridge & Roon Server
+
+## Image features
+
+ * multi-architecture:
+    * [x] linux/amd64
+    * [ ] linux/arm64 (bridge only)
+    * [ ] linux/arm/v7 (bridge only)
+    * [ ] ~~linux/arm/v6~~
+ * hardened:
+    * [x] image runs read-only
+    * [x] image runs with no capabilities
+    * [x] process runs as a non-root user, disabled login, no shell
+ * lightweight
+    * [x] based on `debian:buster-slim`
+    * [x] simple entrypoint script
+    * [ ] multi-stage build with no installed dependencies for the Bridge runtime image, one dependency for Server:
+      * ffmpeg
+ * observable
+    * [ ] healthcheck (server only)
+    * [✓] log to stdout
+    * [ ] ~~prometheus endpoint~~
+
 
 ## Run
 
-```
+```bash
 docker run -d \
     --net host \
     --device /dev/snd \
-    dubodubonduponey/audio-roon-bridge:v1
+    dubodubonduponey/roon-bridge:v1
 
 docker run -d \
     --net host \
     --device /dev/snd \
-    dubodubonduponey/audio-roon-server:v1
+    dubodubonduponey/roon-server:v1
 ```
 
 ## GOTCHA
@@ -22,7 +44,7 @@ Debian by default limits inotify watches to 8192, which might turns out to be to
 
 You probably want to bump that up to prevent your system from crashing / rebooting...
 
-Typically:      
+Typically, on the host:
 
 ```bash
 echo "fs.inotify.max_user_watches = 1048576" > /etc/sysctl.conf
@@ -33,12 +55,12 @@ echo 1048576 > /proc/sys/fs/inotify/max_user_watches
 
 ### Building your own
 
-```
+```bash
 # In case you want to download the latest from Roon servers
 # ./refresh.sh
 
 # Build & push
-IMAGE_OWNER=you ./build.sh
+VENDOR=you ./build.sh
 ```
 
 ### Roon packages version
