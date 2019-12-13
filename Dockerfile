@@ -24,6 +24,7 @@ RUN           apt-get install -qq --no-install-recommends \
 WORKDIR       /dist/boot/bin
 COPY          "./cache/$TARGETPLATFORM/bridge.tar.bz2" .
 RUN           tar -xjf bridge.tar.bz2
+RUN           rm bridge.tar.bz2
 RUN           ./RoonBridge/check.sh
 
 WORKDIR       /dist/boot/lib/
@@ -44,6 +45,7 @@ RUN           apt-get install -qq --no-install-recommends \
 WORKDIR       /dist/boot/bin
 COPY          "./cache/linux/amd64/server.tar.bz2" .
 RUN           tar -xjf server.tar.bz2
+RUN           rm server.tar.bz2
 RUN           ./RoonServer/check.sh
 
 RUN           ln -s /boot/bin/RoonMono/bin/mono-sgen /dist/boot/bin/RoonServer/RoonMono/bin/RAATServer
