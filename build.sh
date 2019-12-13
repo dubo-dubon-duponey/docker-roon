@@ -12,7 +12,7 @@ export PLATFORMS="linux/amd64,linux/arm64,linux/arm/v7" # No v6
 export TITLE="Roon Server"
 export DESCRIPTION="A dubo image for Roon Server"
 export IMAGE_NAME="roon-server"
-export PLATFORMS="linux/amd64"
+export PLATFORMS="linux/amd64" # Nothing but AMD64
 
 # shellcheck source=/dev/null
 . "$(cd "$(dirname "${BASH_SOURCE[0]:-$PWD}")" 2>/dev/null 1>&2 && pwd)/helpers.sh" --target runtime-server

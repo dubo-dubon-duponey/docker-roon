@@ -2,7 +2,7 @@
 set -o errexit -o errtrace -o functrace -o nounset -o pipefail
 
 if [ -e /boot/bin/Server/RoonServer ]; then
-  exec /boot/bin/Server/RoonServer
+  exec /boot/bin/RoonServer/Server
 else
-  exec /boot/bin/Bridge/RoonBridge
+  exec /boot/bin/RoonBridge/Bridge
 fi
