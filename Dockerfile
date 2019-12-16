@@ -3,6 +3,7 @@
 #######################
 ARG           BUILDER_BASE=dubodubonduponey/base:builder
 ARG           RUNTIME_BASE=dubodubonduponey/base:runtime
+# hadolint ignore=DL3006
 FROM          --platform=$BUILDPLATFORM $BUILDER_BASE                                                                   AS builder-healthcheck
 
 ARG           HEALTH_VER=51ebf8ca3d255e0c846307bf72740f731e6210c3
@@ -16,6 +17,7 @@ RUN           arch="${TARGETPLATFORM#*/}"; \
 ##########################
 # Building image bridge
 ##########################
+# hadolint ignore=DL3006
 FROM          $BUILDER_BASE                                                                                             AS builder-bridge
 
 # Install dependencies and tools: bridge
@@ -35,6 +37,7 @@ RUN           cp /usr/lib/"$(gcc -dumpmachine)"/libasound.so.2  .
 ##########################
 # Building image server
 ##########################
+# hadolint ignore=DL3006
 FROM          $BUILDER_BASE                                                                                             AS builder-server
 
 # Install dependencies and tools: bridge
@@ -62,6 +65,7 @@ RUN           cp /usr/lib/"$(gcc -dumpmachine)"/libasound.so.2  .
 #######################
 # Running image bridge
 #######################
+# hadolint ignore=DL3006
 FROM          $RUNTIME_BASE                                                                                             AS runtime-bridge
 
 COPY          --from=builder-bridge --chown=$BUILD_UID:root /dist .
@@ -78,6 +82,7 @@ VOLUME        /tmp
 #######################
 # Running image server
 #######################
+# hadolint ignore=DL3006
 FROM          $RUNTIME_BASE                                                                                             AS runtime-server
 
 USER          root
