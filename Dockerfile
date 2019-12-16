@@ -1,7 +1,9 @@
 #######################
 # Extra builder for healthchecker
 #######################
-FROM          --platform=$BUILDPLATFORM dubodubonduponey/base:builder                                                   AS builder-healthcheck
+ARG           BUILDER_BASE=dubodubonduponey/base:builder
+ARG           RUNTIME_BASE=dubodubonduponey/base:runtime
+FROM          --platform=$BUILDPLATFORM $BUILDER_BASE                                                                   AS builder-healthcheck
 
 ARG           HEALTH_VER=51ebf8ca3d255e0c846307bf72740f731e6210c3
 
@@ -14,7 +16,7 @@ RUN           arch="${TARGETPLATFORM#*/}"; \
 ##########################
 # Building image bridge
 ##########################
-FROM          dubodubonduponey/base:builder                                                                             AS builder-bridge
+FROM          $BUILDER_BASE                                                                                             AS builder-bridge
 
 # Install dependencies and tools: bridge
 RUN           apt-get install -qq --no-install-recommends \
@@ -33,7 +35,7 @@ RUN           cp /usr/lib/"$(gcc -dumpmachine)"/libasound.so.2  .
 ##########################
 # Building image server
 ##########################
-FROM          dubodubonduponey/base:builder                                                                             AS builder-server
+FROM          $BUILDER_BASE                                                                                             AS builder-server
 
 # Install dependencies and tools: bridge
 RUN           apt-get install -qq --no-install-recommends \
@@ -60,7 +62,7 @@ RUN           cp /usr/lib/"$(gcc -dumpmachine)"/libasound.so.2  .
 #######################
 # Running image bridge
 #######################
-FROM          dubodubonduponey/base:runtime                                                                             AS runtime-bridge
+FROM          $RUNTIME_BASE                                                                                             AS runtime-bridge
 
 COPY          --from=builder-bridge --chown=$BUILD_UID:root /dist .
 
@@ -76,7 +78,7 @@ VOLUME        /tmp
 #######################
 # Running image server
 #######################
-FROM          dubodubonduponey/base:runtime                                                                             AS runtime-server
+FROM          $RUNTIME_BASE                                                                                             AS runtime-server
 
 USER          root
 
