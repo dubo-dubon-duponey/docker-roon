@@ -14,14 +14,14 @@ Two Docker images for Roon Bridge & Roon Server
     * [x] image runs with no capabilities
     * [x] process runs as a non-root user, disabled login, no shell
  * lightweight
-    * [x] based on `debian:buster-slim`
+    * [x] based on our slim [Debian buster version](https://github.com/dubo-dubon-duponey/docker-debian)
     * [x] simple entrypoint script
     * [ ] multi-stage build with no installed dependencies for the Bridge runtime image, one dependency for Server:
       * ffmpeg
  * observable
     * [ ] healthcheck (server only)
-    * [✓] log to stdout
-    * [ ] ~~prometheus endpoint~~
+    * [x] log to stdout
+    * [ ] ~~prometheus endpoint~~ not applicable
 
 
 ## Run
@@ -29,12 +29,22 @@ Two Docker images for Roon Bridge & Roon Server
 ```bash
 docker run -d \
     --net host \
+    --name bridge \
+    --read-only \
+    --cap-drop ALL \
+    --group-add audio \
     --device /dev/snd \
+    --rm \
     dubodubonduponey/roon-bridge:v1
 
 docker run -d \
     --net host \
+    --name server \
+    --read-only \
+    --cap-drop ALL \
+    --group-add audio \
     --device /dev/snd \
+    --rm \
     dubodubonduponey/roon-server:v1
 ```
 
@@ -72,9 +82,9 @@ to redownload from Roon servers.
 
 ### Alpine
 
-This is currently running on Debian.
+This is currently running on Debian, and I have no intention in trying again to make this work on Alpine.
 
-Moving to Alpine presents a serie of challenges.
+If you do, here are some notes:
 
  * I first tried using gcompat. Past a linker name mismatch, mono-gen will just SIGBUS.
  * I then tried to cross-compile mono (using qemu). This failed as well with some obscure ARM syscall apparently being not implemented in qemu.
