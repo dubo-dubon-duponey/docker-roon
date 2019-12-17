@@ -1,19 +1,51 @@
 # What
 
-Docker images for Roon Bridge (armv7, arm64 and amd64) & Roon Server (amd64), based on debian:buster-slim
+Two Docker images for Roon Bridge & Roon Server
+
+## Image features
+
+ * multi-architecture:
+    * [x] linux/amd64
+    * [ ] linux/arm64 (bridge only)
+    * [ ] linux/arm/v7 (bridge only)
+    * [ ] ~~linux/arm/v6~~
+ * hardened:
+    * [x] image runs read-only
+    * [x] image runs with no capabilities
+    * [x] process runs as a non-root user, disabled login, no shell
+ * lightweight
+    * [x] based on our slim [Debian buster version](https://github.com/dubo-dubon-duponey/docker-debian)
+    * [x] simple entrypoint script
+    * [ ] multi-stage build with no installed dependencies for the Bridge runtime image, one dependency for Server:
+      * ffmpeg
+ * observable
+    * [ ] healthcheck (server only)
+    * [x] log to stdout
+    * [ ] ~~prometheus endpoint~~ not applicable
+
 
 ## Run
 
-```
+```bash
 docker run -d \
     --net host \
+    --name bridge \
+    --read-only \
+    --cap-drop ALL \
+    --group-add audio \
     --device /dev/snd \
-    dubodubonduponey/audio-roon-bridge:v1
+    --rm \
+    dubodubonduponey/roon-bridge:v1
 
 docker run -d \
     --net host \
+    --name server \
+    --read-only \
+    --cap-drop ALL \
+    --group-add audio \
     --device /dev/snd \
-    dubodubonduponey/audio-roon-server:v1
+    --rm \
+    dubodubonduponey/roon-server:v1
 ```
 
 ## GOTCHA
@@ -22,7 +54,7 @@ Debian by default limits inotify watches to 8192, which might turns out to be to
 
 You probably want to bump that up to prevent your system from crashing / rebooting...
 
-Typically:      
+Typically, on the host:
 
 ```bash
 echo "fs.inotify.max_user_watches = 1048576" > /etc/sysctl.conf
@@ -33,12 +65,12 @@ echo 1048576 > /proc/sys/fs/inotify/max_user_watches
 
 ### Building your own
 
-```
+```bash
 # In case you want to download the latest from Roon servers
 # ./refresh.sh
 
 # Build & push
-IMAGE_OWNER=you ./build.sh
+VENDOR=you ./build.sh
 ```
 
 ### Roon packages version
@@ -50,9 +82,9 @@ to redownload from Roon servers.
 
 ### Alpine
 
-This is currently running on Debian.
+This is currently running on Debian, and I have no intention in trying again to make this work on Alpine.
 
-Moving to Alpine presents a serie of challenges.
+If you do, here are some notes:
 
  * I first tried using gcompat. Past a linker name mismatch, mono-gen will just SIGBUS.
  * I then tried to cross-compile mono (using qemu). This failed as well with some obscure ARM syscall apparently being not implemented in qemu.
