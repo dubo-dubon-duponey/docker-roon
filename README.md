@@ -68,9 +68,6 @@ echo 1048576 > /proc/sys/fs/inotify/max_user_watches
 ```bash
 # In case you want to download the latest from Roon servers
 # ./refresh.sh
-
-# Build & push
-VENDOR=you ./build.sh
 ```
 
 ### Roon packages version
@@ -93,3 +90,7 @@ At this time, ncopa just enabled armv7 for mono (https://git.alpinelinux.org/apo
 
 Whether you can use it as a drop-in replacement for Roon embedded Mono is yet to be determined.
 Assuming this would work, it's unclear also if gcompat would still be necessary.
+
+## Moar?
+
+See [DEVELOP.md](DEVELOP.md)
