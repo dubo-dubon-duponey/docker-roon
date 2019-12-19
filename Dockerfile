@@ -31,8 +31,9 @@ RUN           tar -xjf bridge.tar.bz2
 RUN           rm bridge.tar.bz2
 RUN           ./RoonBridge/check.sh
 
-WORKDIR       /dist/boot/lib/
-RUN           cp /usr/lib/"$(gcc -dumpmachine)"/libasound.so.2  .
+# XXX see note in shairport-sync
+#WORKDIR       /dist/boot/lib/
+#RUN           cp /usr/lib/"$(gcc -dumpmachine)"/libasound.so.2  .
 
 ##########################
 # Building image server
@@ -53,14 +54,15 @@ RUN           tar -xjf server.tar.bz2
 RUN           rm server.tar.bz2
 RUN           ./RoonServer/check.sh
 
-RUN           ln -s /boot/bin/RoonMono/bin/mono-sgen /dist/boot/bin/RoonServer/RoonMono/bin/RAATServer
-RUN           ln -s /boot/bin/RoonMono/bin/mono-sgen /dist/boot/bin/RoonServer/RoonMono/bin/RoonAppliance
-RUN           ln -s /boot/bin/RoonMono/bin/mono-sgen /dist/boot/bin/RoonServer/RoonMono/bin/RoonServer
+RUN           ln -s mono-sgen /dist/boot/bin/RoonServer/RoonMono/bin/RAATServer
+RUN           ln -s mono-sgen /dist/boot/bin/RoonServer/RoonMono/bin/RoonAppliance
+RUN           ln -s mono-sgen /dist/boot/bin/RoonServer/RoonMono/bin/RoonServer
 
 COPY          --from=builder-healthcheck /dist/boot/bin           /dist/boot/bin
 
-WORKDIR       /dist/boot/lib/
-RUN           cp /usr/lib/"$(gcc -dumpmachine)"/libasound.so.2  .
+# XXX see note in shairport-sync
+#WORKDIR       /dist/boot/lib/
+#RUN           cp /usr/lib/"$(gcc -dumpmachine)"/libasound.so.2  .
 
 #######################
 # Running image bridge
@@ -68,13 +70,26 @@ RUN           cp /usr/lib/"$(gcc -dumpmachine)"/libasound.so.2  .
 # hadolint ignore=DL3006
 FROM          $RUNTIME_BASE                                                                                             AS runtime-bridge
 
+USER          root
+
+ARG           DEBIAN_FRONTEND="noninteractive"
+ENV           TERM="xterm" LANG="C.UTF-8" LC_ALL="C.UTF-8"
+# XXX this is possibly not necessary, as roon apparently is able to adress the device directly
+RUN           apt-get update -qq \
+              && apt-get install -qq --no-install-recommends \
+                libasound2=1.1.8-1 \
+              && apt-get -qq autoremove       \
+              && apt-get -qq clean            \
+              && rm -rf /var/lib/apt/lists/*  \
+              && rm -rf /tmp/*                \
+              && rm -rf /var/tmp/*
+
+USER          dubo-dubon-duponey
+
 COPY          --from=builder-bridge --chown=$BUILD_UID:root /dist .
 
 ENV           ROON_DATAROOT /data
 ENV           ROON_ID_DIR /data
-
-EXPOSE        9003/udp
-EXPOSE        9100-9110/tcp
 
 VOLUME        /data
 VOLUME        /tmp
@@ -87,16 +102,18 @@ FROM          $RUNTIME_BASE                                                     
 
 USER          root
 
+# Removing this will prevent the RoonServer from using audio devices, hence making the use of RaatBridges mandatory (which is fine)
+#                libasound2=1.1.8-1 \
 ARG           DEBIAN_FRONTEND="noninteractive"
 ENV           TERM="xterm" LANG="C.UTF-8" LC_ALL="C.UTF-8"
-RUN           apt-get update -qq          && \
-              apt-get install -qq --no-install-recommends ffmpeg=7:4.1.4-1~deb10u1 \
-                                        && \
-              apt-get -qq autoremove       && \
-              apt-get -qq clean            && \
-              rm -rf /var/lib/apt/lists/* && \
-              rm -rf /tmp/*               && \
-              rm -rf /var/tmp/*
+RUN           apt-get update -qq \
+              && apt-get install -qq --no-install-recommends \
+                ffmpeg=7:4.1.4-1~deb10u1 \
+              && apt-get -qq autoremove       \
+              && apt-get -qq clean            \
+              && rm -rf /var/lib/apt/lists/*  \
+              && rm -rf /tmp/*                \
+              && rm -rf /var/tmp/*
 
 USER          dubo-dubon-duponey
 
