@@ -22,7 +22,8 @@ RUN           arch="${TARGETPLATFORM#*/}"; \
 FROM          $BUILDER_BASE                                                                                             AS builder-bridge
 
 # Install dependencies and tools: bridge
-RUN           apt-get install -qq --no-install-recommends \
+RUN           apt-get update -qq && \
+              apt-get install -qq --no-install-recommends \
                 bzip2=1.0.6-9.2~deb10u1 \
                 libasound2=1.1.8-1
 
@@ -43,7 +44,8 @@ RUN           ./RoonBridge/check.sh
 FROM          $BUILDER_BASE                                                                                             AS builder-server
 
 # Install dependencies and tools: bridge
-RUN           apt-get install -qq --no-install-recommends \
+RUN           apt-get update -qq && \
+              apt-get install -qq --no-install-recommends \
                 bzip2=1.0.6-9.2~deb10u1 \
                 libasound2=1.1.8-1 \
                 ffmpeg=7:4.1.4-1~deb10u1 \
