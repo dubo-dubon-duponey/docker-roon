@@ -13,7 +13,7 @@ WORKDIR       $GOPATH/src/$GIT_REPO
 RUN           git clone git://$GIT_REPO .
 RUN           git checkout $GIT_VERSION
 RUN           arch="${TARGETPLATFORM#*/}"; \
-              env GOOS=linux GOARCH="${arch%/*}" go build -mod=vendor -v -ldflags "-s -w" -o /dist/boot/bin/http-health ./cmd/http
+              env GOOS=linux GOARCH="${arch%/*}" go build -v -ldflags "-s -w" -o /dist/boot/bin/http-health ./cmd/http
 
 ##########################
 # Building image bridge
@@ -76,7 +76,6 @@ FROM          $RUNTIME_BASE                                                     
 USER          root
 
 ARG           DEBIAN_FRONTEND="noninteractive"
-ENV           TERM="xterm" LANG="C.UTF-8" LC_ALL="C.UTF-8"
 # XXX this is possibly not necessary, as roon apparently is able to adress the device directly
 RUN           apt-get update -qq \
               && apt-get install -qq --no-install-recommends \
@@ -108,7 +107,6 @@ USER          root
 # Removing this will prevent the RoonServer from using audio devices, hence making the use of RaatBridges mandatory (which is fine)
 #                libasound2=1.1.8-1 \
 ARG           DEBIAN_FRONTEND="noninteractive"
-ENV           TERM="xterm" LANG="C.UTF-8" LC_ALL="C.UTF-8"
 RUN           apt-get update -qq \
               && apt-get install -qq --no-install-recommends \
                 ffmpeg=7:4.1.4-1~deb10u1 \
