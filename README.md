@@ -35,7 +35,7 @@ docker run -d \
     --group-add audio \
     --device /dev/snd \
     --rm \
-    dubodubonduponey/roon-bridge:v1
+    dubodubonduponey/roon-bridge
 
 docker run -d \
     --net host \
@@ -45,7 +45,7 @@ docker run -d \
     --group-add audio \
     --device /dev/snd \
     --rm \
-    dubodubonduponey/roon-server:v1
+    dubodubonduponey/roon-server
 ```
 
 ## GOTCHA

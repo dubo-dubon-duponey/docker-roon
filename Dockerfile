@@ -1,18 +1,21 @@
+ARG           BUILDER_BASE=dubodubonduponey/base:builder
+ARG           RUNTIME_BASE=dubodubonduponey/base:runtime
+
 #######################
 # Extra builder for healthchecker
 #######################
-ARG           BUILDER_BASE=dubodubonduponey/base:builder
-ARG           RUNTIME_BASE=dubodubonduponey/base:runtime
 # hadolint ignore=DL3006
 FROM          --platform=$BUILDPLATFORM $BUILDER_BASE                                                                   AS builder-healthcheck
 
-ARG           HEALTH_VER=51ebf8ca3d255e0c846307bf72740f731e6210c3
+ARG           GIT_REPO=github.com/dubo-dubon-duponey/healthcheckers
+ARG           GIT_VERSION=51ebf8ca3d255e0c846307bf72740f731e6210c3
 
-WORKDIR       $GOPATH/src/github.com/dubo-dubon-duponey/healthcheckers
-RUN           git clone git://github.com/dubo-dubon-duponey/healthcheckers .
-RUN           git checkout $HEALTH_VER
+WORKDIR       $GOPATH/src/$GIT_REPO
+RUN           git clone git://$GIT_REPO .
+RUN           git checkout $GIT_VERSION
 RUN           arch="${TARGETPLATFORM#*/}"; \
-              env GOOS=linux GOARCH="${arch%/*}" go build -v -ldflags "-s -w" -o /dist/boot/bin/http-health ./cmd/http
+              env GOOS=linux GOARCH="${arch%/*}" go build -v -ldflags "-s -w" \
+                -o /dist/boot/bin/http-health ./cmd/http
 
 ##########################
 # Building image bridge
@@ -21,7 +24,8 @@ RUN           arch="${TARGETPLATFORM#*/}"; \
 FROM          $BUILDER_BASE                                                                                             AS builder-bridge
 
 # Install dependencies and tools: bridge
-RUN           apt-get install -qq --no-install-recommends \
+RUN           apt-get update -qq && \
+              apt-get install -qq --no-install-recommends \
                 bzip2=1.0.6-9.2~deb10u1 \
                 libasound2=1.1.8-1
 
@@ -42,7 +46,8 @@ RUN           ./RoonBridge/check.sh
 FROM          $BUILDER_BASE                                                                                             AS builder-server
 
 # Install dependencies and tools: bridge
-RUN           apt-get install -qq --no-install-recommends \
+RUN           apt-get update -qq && \
+              apt-get install -qq --no-install-recommends \
                 bzip2=1.0.6-9.2~deb10u1 \
                 libasound2=1.1.8-1 \
                 ffmpeg=7:4.1.4-1~deb10u1 \
@@ -73,7 +78,6 @@ FROM          $RUNTIME_BASE                                                     
 USER          root
 
 ARG           DEBIAN_FRONTEND="noninteractive"
-ENV           TERM="xterm" LANG="C.UTF-8" LC_ALL="C.UTF-8"
 # XXX this is possibly not necessary, as roon apparently is able to adress the device directly
 RUN           apt-get update -qq \
               && apt-get install -qq --no-install-recommends \
@@ -105,7 +109,6 @@ USER          root
 # Removing this will prevent the RoonServer from using audio devices, hence making the use of RaatBridges mandatory (which is fine)
 #                libasound2=1.1.8-1 \
 ARG           DEBIAN_FRONTEND="noninteractive"
-ENV           TERM="xterm" LANG="C.UTF-8" LC_ALL="C.UTF-8"
 RUN           apt-get update -qq \
               && apt-get install -qq --no-install-recommends \
                 ffmpeg=7:4.1.4-1~deb10u1 \
