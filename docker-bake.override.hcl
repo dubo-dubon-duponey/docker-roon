@@ -1,7 +1,3 @@
-variable "REGISTRY" {
-  default = "docker.io"
-}
-
 group "default" {
   targets = ["bridge", "server"]
 }
@@ -13,7 +9,7 @@ target "bridge" {
     BUILD_DESCRIPTION = "A dubo image for Roon Bridge"
   }
   tags = [
-    "${REGISTRY}/dubodubonduponey/roon-bridge",
+    "dubodubonduponey/roon-bridge",
   ]
   platforms = [
     "linux/amd64",
@@ -30,7 +26,7 @@ target "server" {
     BUILD_DESCRIPTION = "A dubo image for Roon Server"
   }
   tags = [
-    "${REGISTRY}/dubodubonduponey/roon-server",
+    "dubodubonduponey/roon-server",
   ]
   # No v6 with Plex
   platforms = [
