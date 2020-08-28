@@ -50,7 +50,7 @@ RUN           apt-get update -qq && \
               apt-get install -qq --no-install-recommends \
                 bzip2=1.0.6-9.2~deb10u1 \
                 libasound2=1.1.8-1 \
-                ffmpeg=7:4.1.4-1~deb10u1 \
+                ffmpeg=7:4.1.6-1~deb10u1 \
                 cifs-utils=2:6.8-2
 
 WORKDIR       /dist/boot/bin
@@ -109,7 +109,7 @@ USER          root
 #                libasound2=1.1.8-1 \
 RUN           apt-get update -qq \
               && apt-get install -qq --no-install-recommends \
-                ffmpeg=7:4.1.4-1~deb10u1 \
+                ffmpeg=7:4.1.6-1~deb10u1 \
               && apt-get -qq autoremove       \
               && apt-get -qq clean            \
               && rm -rf /var/lib/apt/lists/*  \
