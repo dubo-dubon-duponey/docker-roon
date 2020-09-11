@@ -83,13 +83,19 @@ case "${1:-}" in
     setup::buildctl
   ;;
   *)
-    setup::buildkit > /dev/null
     target="${1:-default}"
     shift || true
+    # Setup buildkitd container optionally
+    if [ ! "${BUILDKIT_HOST:-}" ]; then
+      BUILDKIT_HOST=tcp://0.0.0.0:4242
+      setup::buildkit > /dev/null
+    fi
+    export BUILDKIT_HOST
+
     cd "$root"
-    com="BUILDKIT_HOST=tcp://0.0.0.0:4242 cue "$@" "$target" "$root/hack/frontends/bake_tool.cue" "$root/hack/frontends/dbdbdp_tool.cue" "$root/bake_tool.cue""
+    com="BUILDKIT_HOST=$BUILDKIT_HOST cue "$@" "$target" "$root/hack/frontends/bake_tool.cue" "$root/hack/frontends/dbdbdp_tool.cue" "$root/bake_tool.cue""
     >&2 printf "Debug, will do: %s\n" "$com"
-    BUILDKIT_HOST=tcp://0.0.0.0:4242 cue "$@" "$target" "$root/hack/frontends/bake_tool.cue" "$root/hack/frontends/dbdbdp_tool.cue" "$root/bake_tool.cue" || {
+    cue "$@" "$target" "$root/hack/frontends/bake_tool.cue" "$root/hack/frontends/dbdbdp_tool.cue" "$root/bake_tool.cue" || {
       cd - > /dev/null
       echo "Execution failure"
       exit 1

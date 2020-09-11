@@ -25,6 +25,8 @@ _tag_platforms: string | * _default_platformset | string @tag(platforms,type=str
 _tag_no_cache: bool | * false | bool @tag(no_cache,type=bool)
 _tag_pull: bool | * true | bool @tag(pull,type=bool)
 _tag_tags: string | * "" | string @tag(tags,type=string)
+_tag_cache_type: string | * "local" | string @tag(cache_type,type=string)
+_tag_cache_location: string | * "./cache/buildkit" | string @tag(cache_location,type=string)
 
 env: os.Getenv & {}
 
@@ -32,7 +34,7 @@ env: os.Getenv & {}
 	dockerfile: string | * "Dockerfile"
 	dockerfiledir: string | * "."
 	context: string | * "./context"
-	target: string | * "default"
+	target: string | * ""
 	// platforms: _platforms
 	args: [string]: string
 	pull: _tag_pull
@@ -42,8 +44,24 @@ env: os.Getenv & {}
 	tags: [...string]
 	tags: strings.Split(_tag_tags, ",")
 	_tags: strings.Join(tags, ",")
-	cache_to: [...string] | * ["type=local,dest=./cache/buildkit,mode=max"]
-	cache_from: [...string] | * ["type=local,src=./cache/buildkit"]
+	cache_to: [
+    if _tag_cache_type == "local" {
+      "type=\(_tag_cache_type),dest=\(_tag_cache_location),mode=max"
+    }
+	] + [
+    if _tag_cache_type == "registry" {
+      "type=\(_tag_cache_type),ref=\(_tag_cache_location),mode=max"
+    }
+	]
+	cache_from: [
+    if _tag_cache_type == "local" {
+      "type=\(_tag_cache_type),src=\(_tag_cache_location)"
+    }
+  ] + [
+    if _tag_cache_type == "registry" {
+      "type=\(_tag_cache_type),ref=\(_tag_cache_location)"
+    }
+  ]
 
 	directory: string | * ""
 	tarball: string | * ""
