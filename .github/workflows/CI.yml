@@ -58,5 +58,5 @@ jobs:
         run: |
           PATH=$PATH:$(pwd)
           cd "$GITHUB_WORKSPACE"
-          APT_OPTIONS="Acquire::HTTP::proxy=http://$(docker inspect aptcache | jq -rc .[0].NetworkSettings.Networks.bridge.IPAddress):3142"
+          export APT_OPTIONS="Acquire::HTTP::proxy=http://$(docker inspect aptcache | jq -rc .[0].NetworkSettings.Networks.bridge.IPAddress):3142 Acquire::HTTP::User-Agent=GH-DuboDubonDuponey/0.1 Acquire::Check-Valid-Until=no"
           ./test.sh
