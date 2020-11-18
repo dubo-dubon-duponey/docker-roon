@@ -8,15 +8,19 @@ if ! hadolint ./*Dockerfile*; then
   exit 1
 fi
 
-if ! shellcheck ./*.sh*; then
+if ! shellcheck ./*.sh; then
   >&2 printf "Failed shellchecking\n"
   exit 1
 fi
 
 if [ ! "$TEST_DOES_NOT_BUILD" ]; then
   [ ! -e "./refresh.sh" ] || ./refresh.sh
-  if ! ./build.sh --progress plain --set server.platform=linux/amd64 --set bridge.platform=linux/amd64; then
-    >&2 printf "Failed building image\n"
+  if ! ./hack/cue-bake bridge --inject platforms=linux/arm64; then
+    >&2 printf "Failed building bridge image\n"
+    exit 1
+  fi
+  if ! ./hack/cue-bake server; then
+    >&2 printf "Failed building server image\n"
     exit 1
   fi
 fi

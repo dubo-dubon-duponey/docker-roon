@@ -4,7 +4,7 @@ ARG           RUNTIME_BASE=dubodubonduponey/base:runtime
 #######################
 # Extra builder for healthchecker
 #######################
-# hadolint ignore=DL3006
+# hadolint ignore=DL3006,DL3029
 FROM          --platform=$BUILDPLATFORM $BUILDER_BASE                                                                   AS builder-healthcheck
 
 ARG           GIT_REPO=github.com/dubo-dubon-duponey/healthcheckers
@@ -13,8 +13,8 @@ ARG           GIT_VERSION=51ebf8ca3d255e0c846307bf72740f731e6210c3
 WORKDIR       $GOPATH/src/$GIT_REPO
 RUN           git clone git://$GIT_REPO .
 RUN           git checkout $GIT_VERSION
-RUN           arch="${TARGETPLATFORM#*/}"; \
-              env GOOS=linux GOARCH="${arch%/*}" go build -v -ldflags "-s -w" \
+# hadolint ignore=DL4006
+RUN           env GOOS=linux GOARCH="$(printf "%s" "$TARGETPLATFORM" | sed -E 's/^[^/]+\/([^/]+).*/\1/')" go build -v -ldflags "-s -w" \
                 -o /dist/boot/bin/http-health ./cmd/http
 
 ##########################
@@ -50,7 +50,7 @@ RUN           apt-get update -qq && \
               apt-get install -qq --no-install-recommends \
                 bzip2=1.0.6-9.2~deb10u1 \
                 libasound2=1.1.8-1 \
-                ffmpeg=7:4.1.4-1~deb10u1 \
+                ffmpeg=7:4.1.6-1~deb10u1 \
                 cifs-utils=2:6.8-2
 
 WORKDIR       /dist/boot/bin
@@ -77,7 +77,6 @@ FROM          $RUNTIME_BASE                                                     
 
 USER          root
 
-ARG           DEBIAN_FRONTEND="noninteractive"
 # XXX this is possibly not necessary, as roon apparently is able to adress the device directly
 RUN           apt-get update -qq \
               && apt-get install -qq --no-install-recommends \
@@ -108,10 +107,9 @@ USER          root
 
 # Removing this will prevent the RoonServer from using audio devices, hence making the use of RaatBridges mandatory (which is fine)
 #                libasound2=1.1.8-1 \
-ARG           DEBIAN_FRONTEND="noninteractive"
 RUN           apt-get update -qq \
               && apt-get install -qq --no-install-recommends \
-                ffmpeg=7:4.1.4-1~deb10u1 \
+                ffmpeg=7:4.1.6-1~deb10u1 \
               && apt-get -qq autoremove       \
               && apt-get -qq clean            \
               && rm -rf /var/lib/apt/lists/*  \
