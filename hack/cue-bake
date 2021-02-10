@@ -3,7 +3,7 @@ set -o errexit -o errtrace -o functrace -o nounset -o pipefail
 
 # Where to put buildctl if it's not in the path
 BIN_LOCATION="$HOME/Projects/Command/bin"
-BUILDKIT_IMAGE="ghcr.io/dubo-dubon-duponey/buildkit"
+BUILDKIT_IMAGE="dubodubonduponey/buildkit"
 BUILDCTL_IMAGE="dubodubonduponey/buildkit"
 
 # shellcheck source=/dev/null
@@ -103,10 +103,12 @@ case "${1:-}" in
     setup::cue
     setup::buildctl "$BIN_LOCATION"
 
-    export BUILDKIT_HOST="${BUILDKIT_HOST:-tcp://buildkit-mac.local:4242}"
+    export BUILDKIT_HOST="${BUILDKIT_HOST:-tcp://0.0.0.0:4242}"
 
     # Setup buildkitd container optionally
-    [ "${BUILDKIT_HOST:-}" != "tcp://buildkit-mac.local:4242" ] || setup::buildkit
+    if [ "${BUILDKIT_HOST:-}" == "tcp://buildkit-mac.local:4242" ] || [ "${BUILDKIT_HOST:-}" == "tcp://0.0.0.0:4242" ]; then
+      setup::buildkit
+    fi
 
     target="${1:-image}"
     shift || true
