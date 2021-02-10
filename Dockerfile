@@ -9,13 +9,15 @@ FROM          --platform=$BUILDPLATFORM $BUILDER_BASE                           
 
 ARG           GIT_REPO=github.com/dubo-dubon-duponey/healthcheckers
 ARG           GIT_VERSION=51ebf8ca3d255e0c846307bf72740f731e6210c3
+ARG           BUILD_TARGET=./cmd/http
+ARG           BUILD_OUTPUT=http-health
 
 WORKDIR       $GOPATH/src/$GIT_REPO
 RUN           git clone git://$GIT_REPO .
 RUN           git checkout $GIT_VERSION
 # hadolint ignore=DL4006
 RUN           env GOOS=linux GOARCH="$(printf "%s" "$TARGETPLATFORM" | sed -E 's/^[^/]+\/([^/]+).*/\1/')" go build -v -ldflags "-s -w" \
-                -o /dist/boot/bin/http-health ./cmd/http
+                -o /dist/boot/bin/"$BUILD_OUTPUT" "$BUILD_TARGET"
 
 ##########################
 # Building image bridge
@@ -91,8 +93,8 @@ USER          dubo-dubon-duponey
 
 COPY          --from=builder-bridge --chown=$BUILD_UID:root /dist .
 
-ENV           ROON_DATAROOT /data
-ENV           ROON_ID_DIR /data
+ENV           ROON_DATAROOT=/data
+ENV           ROON_ID_DIR=/data
 
 VOLUME        /data
 VOLUME        /tmp
@@ -120,8 +122,8 @@ USER          dubo-dubon-duponey
 
 COPY          --from=builder-server --chown=$BUILD_UID:root /dist .
 
-ENV           ROON_DATAROOT /data
-ENV           ROON_ID_DIR /data
+ENV           ROON_DATAROOT=/data
+ENV           ROON_ID_DIR=/data
 
 EXPOSE        9003/udp
 EXPOSE        9100-9110/tcp

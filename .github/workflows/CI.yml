@@ -28,7 +28,7 @@ jobs:
       - name: Install cuelang
         # XXX move to alpha4 ASAP
         run: |
-          curl --proto '=https' --tlsv1.2 -sSfL -o cue.tar.gz "https://github.com/cuelang/cue/releases/download/v0.3.0-alpha1/cue_0.3.0-alpha1_$(uname -s)_$(uname -m).tar.gz"
+          curl --proto '=https' --tlsv1.2 -sSfL -o cue.tar.gz "https://github.com/cuelang/cue/releases/download/v0.3.0-alpha6/cue_0.3.0-alpha6_$(uname -s)_$(uname -m).tar.gz"
           tar -xf cue.tar.gz
           rm cue.tar.gz
 
@@ -61,6 +61,6 @@ jobs:
         run: |
           PATH=$PATH:$(pwd)
           cd "$GITHUB_WORKSPACE"
-          export APT_OPTIONS="Acquire::HTTP::proxy=http://$(docker inspect aptcache | jq -rc .[0].NetworkSettings.Networks.bridge.IPAddress):3142 Acquire::HTTP::User-Agent=GH-DuboDubonDuponey/0.1 Acquire::Check-Valid-Until=no"
+          export APT_OPTIONS="Acquire::HTTP::proxy=http://$(docker inspect aptcache | jq -rc .[0].NetworkSettings.Networks.bridge.IPAddress):3142 Acquire::HTTP::User-Agent=GH-DuboDubonDuponey/1.0 Acquire::Check-Valid-Until=no"
           # export BASE_BASE="ghcr.io/dubo-dubon-duponey/base"
           ./test.sh
