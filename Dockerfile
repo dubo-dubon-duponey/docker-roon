@@ -1,30 +1,32 @@
-ARG           BUILDER_BASE=dubodubonduponey/base@sha256:b51f084380bc1bd2b665840317b6f19ccc844ee2fc7e700bf8633d95deba2819
-ARG           RUNTIME_BASE=dubodubonduponey/base@sha256:d28e8eed3e87e8dc5afdd56367d3cf2da12a0003d064b5c62405afbe4725ee99
+ARG           FROM_IMAGE_BUILDER=ghcr.io/dubo-dubon-duponey/base:builder-bullseye-2021-06-01@sha256:addbd9b89d8973df985d2d95e22383961ba7b9c04580ac6a7f406a3a9ec4731e
+ARG           FROM_IMAGE_RUNTIME=ghcr.io/dubo-dubon-duponey/base:runtime-bullseye-2021-06-01@sha256:a2b1b2f69ed376bd6ffc29e2d240e8b9d332e78589adafadb84c73b778e6bc77
 
 #######################
 # Extra builder for healthchecker
 #######################
-# hadolint ignore=DL3006,DL3029
-FROM          --platform=$BUILDPLATFORM $BUILDER_BASE                                                                   AS builder-healthcheck
+FROM          --platform=$BUILDPLATFORM $FROM_IMAGE_BUILDER                                                             AS builder-healthcheck
 
 ARG           GIT_REPO=github.com/dubo-dubon-duponey/healthcheckers
-ARG           GIT_VERSION=51ebf8ca3d255e0c846307bf72740f731e6210c3
-ARG           BUILD_TARGET=./cmd/http
-ARG           BUILD_OUTPUT=http-health
-ARG           BUILD_FLAGS="-s -w"
+ARG           GIT_VERSION=51ebf8c
+ARG           GIT_COMMIT=51ebf8ca3d255e0c846307bf72740f731e6210c3
+ARG           GO_BUILD_SOURCE=./cmd/http
+ARG           GO_BUILD_OUTPUT=http-health
+ARG           GO_LD_FLAGS="-s -w"
+ARG           GO_TAGS="netgo osusergo"
 
 WORKDIR       $GOPATH/src/$GIT_REPO
-RUN           git clone git://$GIT_REPO .
-RUN           git checkout $GIT_VERSION
+RUN           git clone --recurse-submodules git://"$GIT_REPO" . && git checkout "$GIT_COMMIT"
+ARG           GOOS="$TARGETOS"
+ARG           GOARCH="$TARGETARCH"
+
 # hadolint ignore=DL4006
-RUN           env GOOS=linux GOARCH="$(printf "%s" "$TARGETPLATFORM" | sed -E 's/^[^/]+\/([^/]+).*/\1/')" go build -v \
-                -ldflags "$BUILD_FLAGS" -o /dist/boot/bin/"$BUILD_OUTPUT" "$BUILD_TARGET"
+RUN           env GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)" go build -trimpath $(if [ "$CGO_ENABLED" = 1 ]; then printf "%s" "-buildmode pie"; fi) \
+                -ldflags "$GO_LD_FLAGS" -tags "$GO_TAGS" -o /dist/boot/bin/"$GO_BUILD_OUTPUT" "$GO_BUILD_SOURCE"
 
 ##########################
 # Building image bridge
 ##########################
-# hadolint ignore=DL3006
-FROM          $BUILDER_BASE                                                                                             AS builder-bridge
+FROM          $FROM_IMAGE_BUILDER                                                                                       AS builder-bridge
 
 # Install dependencies and tools: bridge
 RUN           apt-get update -qq && \
@@ -45,8 +47,7 @@ RUN           ./RoonBridge/check.sh
 ##########################
 # Building image server
 ##########################
-# hadolint ignore=DL3006
-FROM          $BUILDER_BASE                                                                                             AS builder-server
+FROM          $FROM_IMAGE_BUILDER                                                                                       AS builder-server
 
 # Install dependencies and tools: bridge
 RUN           apt-get update -qq && \
@@ -75,8 +76,7 @@ COPY          --from=builder-healthcheck /dist/boot/bin           /dist/boot/bin
 #######################
 # Running image bridge
 #######################
-# hadolint ignore=DL3006
-FROM          $RUNTIME_BASE                                                                                             AS runtime-bridge
+FROM          $FROM_IMAGE_RUNTIME                                                                                       AS runtime-bridge
 
 USER          root
 
@@ -92,7 +92,7 @@ RUN           apt-get update -qq \
 
 USER          dubo-dubon-duponey
 
-COPY          --from=builder-bridge --chown=$BUILD_UID:root /dist .
+COPY          --from=builder-bridge --chown=$BUILD_UID:root /dist /
 
 ENV           ROON_DATAROOT=/data
 ENV           ROON_ID_DIR=/data
@@ -103,8 +103,7 @@ VOLUME        /tmp
 #######################
 # Running image server
 #######################
-# hadolint ignore=DL3006
-FROM          $RUNTIME_BASE                                                                                             AS runtime-server
+FROM          $FROM_IMAGE_RUNTIME                                                                                       AS runtime-server
 
 USER          root
 
@@ -121,7 +120,7 @@ RUN           apt-get update -qq \
 
 USER          dubo-dubon-duponey
 
-COPY          --from=builder-server --chown=$BUILD_UID:root /dist .
+COPY          --from=builder-server --chown=$BUILD_UID:root /dist /
 
 ENV           ROON_DATAROOT=/data
 ENV           ROON_ID_DIR=/data

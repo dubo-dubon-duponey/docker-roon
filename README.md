@@ -13,7 +13,7 @@ Two Docker images for Roon Bridge & Roon Server
     * [x] image runs with no capabilities
     * [x] process runs as a non-root user, disabled login, no shell
  * lightweight
-    * [x] based on our slim [Debian buster version](https://github.com/dubo-dubon-duponey/docker-debian)
+    * [x] based on our slim [Debian bullseye version (2021-06-01)](https://github.com/dubo-dubon-duponey/docker-debian)
     * [x] simple entrypoint script
     * [ ] multi-stage build with no installed dependencies for the Bridge runtime image, one dependency for Server (ffmpeg)
  * observable
