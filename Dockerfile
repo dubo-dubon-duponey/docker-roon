@@ -19,7 +19,7 @@ RUN           git clone --recurse-submodules git://"$GIT_REPO" . && git checkout
 ARG           GOOS="$TARGETOS"
 ARG           GOARCH="$TARGETARCH"
 
-# hadolint ignore=DL4006
+# hadolint ignore=SC2046
 RUN           env GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)" go build -trimpath $(if [ "$CGO_ENABLED" = 1 ]; then printf "%s" "-buildmode pie"; fi) \
                 -ldflags "$GO_LD_FLAGS" -tags "$GO_TAGS" -o /dist/boot/bin/"$GO_BUILD_OUTPUT" "$GO_BUILD_SOURCE"
 
@@ -31,8 +31,8 @@ FROM          $FROM_IMAGE_BUILDER                                               
 # Install dependencies and tools: bridge
 RUN           apt-get update -qq && \
               apt-get install -qq --no-install-recommends \
-                bzip2=1.0.6-9.2~deb10u1 \
-                libasound2=1.1.8-1
+                bzip2=1.0.8-4 \
+                libasound2=1.2.4-1.1
 
 WORKDIR       /dist/boot/bin
 COPY          "./cache/$TARGETPLATFORM/bridge.tar.bz2" .
@@ -52,10 +52,10 @@ FROM          $FROM_IMAGE_BUILDER                                               
 # Install dependencies and tools: bridge
 RUN           apt-get update -qq && \
               apt-get install -qq --no-install-recommends \
-                bzip2=1.0.6-9.2~deb10u1 \
-                libasound2=1.1.8-1 \
-                ffmpeg=7:4.1.6-1~deb10u1 \
-                cifs-utils=2:6.8-2
+                bzip2=1.0.8-4 \
+                libasound2=1.2.4-1.1 \
+                ffmpeg=7:4.3.2-0+deb11u1 \
+                cifs-utils=2:6.11-3
 
 WORKDIR       /dist/boot/bin
 COPY          "./cache/linux/amd64/server.tar.bz2" .
@@ -83,7 +83,7 @@ USER          root
 # XXX this is possibly not necessary, as roon apparently is able to adress the device directly
 RUN           apt-get update -qq \
               && apt-get install -qq --no-install-recommends \
-                libasound2=1.1.8-1 \
+                libasound2=1.2.4-1.1 \
               && apt-get -qq autoremove       \
               && apt-get -qq clean            \
               && rm -rf /var/lib/apt/lists/*  \
@@ -108,10 +108,10 @@ FROM          $FROM_IMAGE_RUNTIME                                               
 USER          root
 
 # Removing this will prevent the RoonServer from using audio devices, hence making the use of RaatBridges mandatory (which is fine)
-#                libasound2=1.1.8-1 \
+#                libasound2=1.2.4-1.1 \
 RUN           apt-get update -qq \
               && apt-get install -qq --no-install-recommends \
-                ffmpeg=7:4.1.6-1~deb10u1 \
+                ffmpeg=7:4.3.2-0+deb11u1 \
               && apt-get -qq autoremove       \
               && apt-get -qq clean            \
               && rm -rf /var/lib/apt/lists/*  \
