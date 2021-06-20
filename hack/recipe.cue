@@ -106,7 +106,6 @@ cakes: {
 					types.#Platforms.#ARM64,
 					types.#Platforms.#V7,
 				]
-				platforms: injector._platforms
 				args: {
 					FROM_IMAGE_BUILDER: "ghcr.io/dubo-dubon-duponey/base:builder-bullseye-2021-06-01"
 					FROM_IMAGE_RUNTIME: recipe.input.from.toString

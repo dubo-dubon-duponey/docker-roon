@@ -1,5 +1,5 @@
-ARG           FROM_IMAGE_BUILDER=ghcr.io/dubo-dubon-duponey/base:builder-bullseye-2021-06-01@sha256:addbd9b89d8973df985d2d95e22383961ba7b9c04580ac6a7f406a3a9ec4731e
-ARG           FROM_IMAGE_RUNTIME=ghcr.io/dubo-dubon-duponey/base:runtime-bullseye-2021-06-01@sha256:a2b1b2f69ed376bd6ffc29e2d240e8b9d332e78589adafadb84c73b778e6bc77
+ARG           FROM_IMAGE_BUILDER=ghcr.io/dubo-dubon-duponey/base:builder-bullseye-2021-06-01@sha256:f0ba079c698161922961d9492e27469fca807b9a86a68e6162c325b62b792e81
+ARG           FROM_IMAGE_RUNTIME=ghcr.io/dubo-dubon-duponey/base:runtime-bullseye-2021-06-01@sha256:d904e13fbfd217ced9a853d932281f2f64e108d725a767858d2c1957b4e10232
 
 #######################
 # Extra builder for healthchecker
@@ -29,7 +29,15 @@ RUN           env GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)" go build -tr
 FROM          $FROM_IMAGE_BUILDER                                                                                       AS builder-bridge
 
 # Install dependencies and tools: bridge
-RUN           apt-get update -qq && \
+RUN           --mount=type=secret,mode=0444,id=CA,dst=/etc/ssl/certs/ca-certificates.crt \
+              --mount=type=secret,id=CERTIFICATE \
+              --mount=type=secret,id=KEY \
+              --mount=type=secret,id=PASSPHRASE \
+              --mount=type=secret,mode=0444,id=GPG.gpg \
+              --mount=type=secret,id=NETRC \
+              --mount=type=secret,id=APT_SOURCES \
+              --mount=type=secret,id=APT_OPTIONS,dst=/etc/apt/apt.conf.d/dbdbdp.conf \
+              apt-get update -qq && \
               apt-get install -qq --no-install-recommends \
                 bzip2=1.0.8-4 \
                 libasound2=1.2.4-1.1
@@ -50,7 +58,15 @@ RUN           ./RoonBridge/check.sh
 FROM          $FROM_IMAGE_BUILDER                                                                                       AS builder-server
 
 # Install dependencies and tools: bridge
-RUN           apt-get update -qq && \
+RUN           --mount=type=secret,mode=0444,id=CA,dst=/etc/ssl/certs/ca-certificates.crt \
+              --mount=type=secret,id=CERTIFICATE \
+              --mount=type=secret,id=KEY \
+              --mount=type=secret,id=PASSPHRASE \
+              --mount=type=secret,mode=0444,id=GPG.gpg \
+              --mount=type=secret,id=NETRC \
+              --mount=type=secret,id=APT_SOURCES \
+              --mount=type=secret,id=APT_OPTIONS,dst=/etc/apt/apt.conf.d/dbdbdp.conf \
+              apt-get update -qq && \
               apt-get install -qq --no-install-recommends \
                 bzip2=1.0.8-4 \
                 libasound2=1.2.4-1.1 \
@@ -81,7 +97,15 @@ FROM          $FROM_IMAGE_RUNTIME                                               
 USER          root
 
 # XXX this is possibly not necessary, as roon apparently is able to adress the device directly
-RUN           apt-get update -qq \
+RUN           --mount=type=secret,mode=0444,id=CA,dst=/etc/ssl/certs/ca-certificates.crt \
+              --mount=type=secret,id=CERTIFICATE \
+              --mount=type=secret,id=KEY \
+              --mount=type=secret,id=PASSPHRASE \
+              --mount=type=secret,mode=0444,id=GPG.gpg \
+              --mount=type=secret,id=NETRC \
+              --mount=type=secret,id=APT_SOURCES \
+              --mount=type=secret,id=APT_OPTIONS,dst=/etc/apt/apt.conf.d/dbdbdp.conf \
+              apt-get update -qq \
               && apt-get install -qq --no-install-recommends \
                 libasound2=1.2.4-1.1 \
               && apt-get -qq autoremove       \
@@ -109,7 +133,15 @@ USER          root
 
 # Removing this will prevent the RoonServer from using audio devices, hence making the use of RaatBridges mandatory (which is fine)
 #                libasound2=1.2.4-1.1 \
-RUN           apt-get update -qq \
+RUN           --mount=type=secret,mode=0444,id=CA,dst=/etc/ssl/certs/ca-certificates.crt \
+              --mount=type=secret,id=CERTIFICATE \
+              --mount=type=secret,id=KEY \
+              --mount=type=secret,id=PASSPHRASE \
+              --mount=type=secret,mode=0444,id=GPG.gpg \
+              --mount=type=secret,id=NETRC \
+              --mount=type=secret,id=APT_SOURCES \
+              --mount=type=secret,id=APT_OPTIONS,dst=/etc/apt/apt.conf.d/dbdbdp.conf \
+              apt-get update -qq \
               && apt-get install -qq --no-install-recommends \
                 ffmpeg=7:4.3.2-0+deb11u1 \
               && apt-get -qq autoremove       \
