@@ -1,15 +1,20 @@
 ARG           FROM_REGISTRY=ghcr.io/dubo-dubon-duponey
 
-ARG           FROM_IMAGE_BUILDER=base:builder-bullseye-2021-07-01@sha256:f1c46316c38cc1ca54fd53b54b73797b35ba65ee727beea1a5ed08d0ad7e8ccf
-ARG           FROM_IMAGE_RUNTIME=base:runtime-bullseye-2021-07-01@sha256:9f5b20d392e1a1082799b3befddca68cee2636c72c502aa7652d160896f85b36
-ARG           FROM_IMAGE_TOOLS=tools:linux-bullseye-2021-07-01@sha256:f1e25694fe933c7970773cb323975bb5c995fa91d0c1a148f4f1c131cbc5872c
+ARG           FROM_IMAGE_BUILDER=base:builder-bullseye-2021-08-01@sha256:f492d8441ddd82cad64889d44fa67cdf3f058ca44ab896de436575045a59604c
+ARG           FROM_IMAGE_AUDITOR=base:auditor-bullseye-2021-08-01@sha256:a9adfa210235133d99bf06fab9a631cd6d44ee3aed6b081ad61b342fcc7d189c
+ARG           FROM_IMAGE_RUNTIME=base:runtime-bullseye-2021-08-01@sha256:edc80b2c8fd94647f793cbcb7125c87e8db2424f16b9fd0b8e173af850932b48
+ARG           FROM_IMAGE_TOOLS=tools:linux-bullseye-2021-08-01@sha256:87ec12fe94a58ccc95610ee826f79b6e57bcfd91aaeb4b716b0548ab7b2408a7
 
 FROM          $FROM_REGISTRY/$FROM_IMAGE_TOOLS                                                                          AS builder-tools
 
 ##########################
 # Building image bridge
 ##########################
-FROM          $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                                                        AS builder-bridge
+FROM          $FROM_REGISTRY/$FROM_IMAGE_AUDITOR                                                                        AS builder-bridge
+
+ARG           TARGETPLATFORM
+ARG           TARGETARCH
+ARG           TARGETVARIANT
 
 # Install dependencies and tools: bridge
 RUN           --mount=type=secret,uid=100,id=CA \
@@ -30,14 +35,15 @@ RUN           tar -xjf bridge.tar.bz2
 RUN           rm bridge.tar.bz2
 RUN           ./RoonBridge/check.sh
 
-# XXX see note in shairport-sync
-#WORKDIR       /dist/boot/lib/
-#RUN           cp /usr/lib/"$(gcc -dumpmachine)"/libasound.so.2  .
+RUN           mkdir -p /dist/boot/lib; \
+              eval "$(dpkg-architecture -A "$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/armv6/armel/" -e "s/armv7/armhf/" -e "s/ppc64le/ppc64el/" -e "s/386/i386/")")"; \
+              cp /usr/lib/"$DEB_TARGET_MULTIARCH"/libasound.so.2  /dist/boot/lib
 
 ##########################
 # Building image server
 ##########################
-FROM          $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                                                        AS builder-server
+# Better solution would be to move to auditor
+FROM          $FROM_REGISTRY/$FROM_IMAGE_AUDITOR                                                                        AS builder-server
 
 # Install dependencies and tools: bridge
 RUN           --mount=type=secret,uid=100,id=CA \
@@ -73,31 +79,11 @@ RUN           ln -s mono-sgen /dist/boot/bin/RoonServer/RoonMono/bin/RoonServer
 #######################
 FROM          $FROM_REGISTRY/$FROM_IMAGE_RUNTIME                                                                        AS runtime-bridge
 
-USER          root
-
-# XXX this is possibly not necessary, as roon apparently is able to adress the device directly
-RUN           --mount=type=secret,uid=100,id=CA \
-              --mount=type=secret,uid=100,id=CERTIFICATE \
-              --mount=type=secret,uid=100,id=KEY \
-              --mount=type=secret,uid=100,id=GPG.gpg \
-              --mount=type=secret,id=NETRC \
-              --mount=type=secret,id=APT_SOURCES \
-              --mount=type=secret,id=APT_CONFIG \
-              apt-get update -qq \
-              && apt-get install -qq --no-install-recommends \
-                libasound2=1.2.4-1.1 \
-              && apt-get -qq autoremove       \
-              && apt-get -qq clean            \
-              && rm -rf /var/lib/apt/lists/*  \
-              && rm -rf /tmp/*                \
-              && rm -rf /var/tmp/*
-
-USER          dubo-dubon-duponey
-
+COPY          --from=builder-bridge /usr/share/alsa /usr/share/alsa
 COPY          --from=builder-bridge --chown=$BUILD_UID:root /dist /
 
-ENV           ROON_DATAROOT=/data
-ENV           ROON_ID_DIR=/data
+ENV           ROON_DATAROOT=/data/data_root
+ENV           ROON_ID_DIR=/data/id_dir
 
 VOLUME        /data
 VOLUME        /tmp
@@ -105,12 +91,12 @@ VOLUME        /tmp
 #######################
 # Builder assembly for server
 #######################
-FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                              AS builder
+FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_AUDITOR                                              AS builder
 
 COPY          --from=builder-server   /dist/boot/bin           /dist/boot/bin
 
 COPY          --from=builder-tools  /boot/bin/caddy          /dist/boot/bin
-COPY          --from=builder-tools  /boot/bin/goello-client  /dist/boot/bin
+COPY          --from=builder-tools  /boot/bin/goello-server  /dist/boot/bin
 COPY          --from=builder-tools  /boot/bin/http-health    /dist/boot/bin
 
 RUN           chmod 555 /dist/boot/bin/*; \
@@ -144,8 +130,8 @@ RUN           --mount=type=secret,uid=100,id=CA \
 
 USER          dubo-dubon-duponey
 
-ENV           ROON_DATAROOT=/data
-ENV           ROON_ID_DIR=/data
+ENV           ROON_DATAROOT=/data/data_root
+ENV           ROON_ID_DIR=/data/id_dir
 EXPOSE        9003/udp
 VOLUME        /music
 
@@ -156,27 +142,41 @@ COPY          --from=builder --chown=$BUILD_UID:root /dist /
 ### Front server configuration
 # Port to use
 ENV           PORT=4443
+ENV           PORT_HTTP=80
 EXPOSE        4443
+EXPOSE        80
 # Log verbosity for
 ENV           LOG_LEVEL="warn"
 # Domain name to serve
 ENV           DOMAIN="$NICK.local"
+ENV           ADDITIONAL_DOMAINS=""
+
+# Whether the server should behave as a proxy (disallows mTLS)
+ENV           SERVER_NAME="DuboDubonDuponey/1.0 (Caddy/2) [$NICK]"
+
 # Control wether tls is going to be "internal" (eg: self-signed), or alternatively an email address to enable letsencrypt
 ENV           TLS="internal"
+# 1.2 or 1.3
+ENV           TLS_MIN=1.2
 # Either require_and_verify or verify_if_given
-ENV           MTLS_MODE="verify_if_given"
+ENV           TLS_MTLS_MODE="verify_if_given"
+# Issuer name to appear in certificates
+#ENV           TLS_ISSUER="Dubo Dubon Duponey"
+# Either disable_redirects or ignore_loaded_certs if one wants the redirects
+ENV           TLS_AUTO=disable_redirects
 
+ENV           AUTH_ENABLED=false
 # Realm in case access is authenticated
-ENV           REALM="My Precious Realm"
+ENV           AUTH_REALM="My Precious Realm"
 # Provide username and password here (call the container with the "hash" command to generate a properly encrypted password, otherwise, a random one will be generated)
-ENV           USERNAME=""
-ENV           PASSWORD=""
+ENV           AUTH_USERNAME="dubo-dubon-duponey"
+ENV           AUTH_PASSWORD="cmVwbGFjZV9tZV93aXRoX3NvbWV0aGluZwo="
 
 ### mDNS broadcasting
 # Enable/disable mDNS support
 ENV           MDNS_ENABLED=false
 # Name is used as a short description for the service
-ENV           MDNS_NAME="mDNS display name"
+ENV           MDNS_NAME="$NICK mDNS display name"
 # The service will be annonced and reachable at $MDNS_HOST.local
 ENV           MDNS_HOST="$NICK"
 # Type to advertise
