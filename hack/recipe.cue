@@ -27,11 +27,6 @@ cakes: {
 
 			output: {
 				images: {
-					registries: {...} | * {
-						"push-registry.local": "dubo-dubon-duponey",
-						"ghcr.io": "dubo-dubon-duponey",
-						"docker.io": "dubodubonduponey"
-					},
 					names: [...string] | * ["roon"],
 					tags: [...string] | * ["bridge-latest"]
 				}
@@ -61,11 +56,6 @@ cakes: {
 
 			output: {
 				images: {
-					registries: {...} | * {
-						"push-registry.local": "dubo-dubon-duponey",
-						"ghcr.io": "dubo-dubon-duponey",
-						"docker.io": "dubodubonduponey"
-					},
 					names: [...string] | * ["roon"],
 					tags: [...string] | * ["server-latest"]
 				}
@@ -81,7 +71,7 @@ cakes: {
 
 injectors: {
 	suite: * "bullseye" | =~ "^(?:jessie|stretch|buster|bullseye|sid)$" @tag(suite, type=string)
-	date: * "2021-07-01" | =~ "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" @tag(date, type=string)
+	date: * "2021-08-01" | =~ "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" @tag(date, type=string)
 	platforms: string @tag(platforms, type=string)
 	registry: * "registry.local" | string @tag(registry, type=string)
 }
@@ -89,21 +79,16 @@ injectors: {
 override: {
 	input: from: registry: injectors.registry
 
-	if injectors.platforms != _|_ {
-		process: platforms: strings.Split(injectors.platforms, ",")
-	}
-
-	output: images: registries: {
-		"push-registry.local": "dubo-dubon-duponey",
-		"ghcr.io": "dubo-dubon-duponey",
-		"docker.io": "dubodubonduponey"
-	}
 
 	metadata: ref_name: injectors.suite + "-" + injectors.date
 }
 
 cakes: bridge: recipe: override
 cakes: server: recipe: override
+
+if injectors.platforms != _|_ {
+	cakes: bridge: recipe: process: platforms: strings.Split(injectors.platforms, ",")
+}
 
 cakes: bridge: recipe: output: images: tags: ["bridge-" + injectors.suite + "-" + injectors.date, "bridge-" + injectors.suite + "-latest", "bridge-latest"]
 cakes: server: recipe: output: images: tags: ["server-" + injectors.suite + "-" + injectors.date, "server-" + injectors.suite + "-latest", "server-latest"]
