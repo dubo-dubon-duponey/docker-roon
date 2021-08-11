@@ -1,10 +1,10 @@
 ARG           FROM_REGISTRY=ghcr.io/dubo-dubon-duponey
 
-ARG           FROM_IMAGE_FETCHER=base:golang-bullseye-2021-08-01@sha256:820caa12223eb2f1329736bcba8f1ac96a8ab7db37370cbe517dbd1d9f6ca606
-ARG           FROM_IMAGE_BUILDER=base:builder-bullseye-2021-08-01@sha256:f492d8441ddd82cad64889d44fa67cdf3f058ca44ab896de436575045a59604c
-ARG           FROM_IMAGE_AUDITOR=base:auditor-bullseye-2021-08-01@sha256:0f9017945c84b48c5e9906f3325409ab446964a9e97c65a1e1820f2dd3ff1b2c
-ARG           FROM_IMAGE_TOOLS=tools:linux-bullseye-2021-08-01@sha256:cec37383d167e274e3140f2b5db8cb80d0fb406538372f0c23ba09d97ee0b2a3
-ARG           FROM_IMAGE_RUNTIME=base:runtime-bullseye-2021-08-01@sha256:edc80b2c8fd94647f793cbcb7125c87e8db2424f16b9fd0b8e173af850932b48
+ARG           FROM_IMAGE_FETCHER=base:golang-bullseye-2021-08-01@sha256:e4c52b4e7e46a04b49989d3077e62858e7ce9335e21c88718c391b294ebd25fc
+ARG           FROM_IMAGE_BUILDER=base:builder-bullseye-2021-08-01@sha256:a49ab8a07a2da61eee63b7d9d33b091df190317aefb91203ad0ac41af18d5236
+ARG           FROM_IMAGE_AUDITOR=base:auditor-bullseye-2021-08-01@sha256:607d8b42af53ebbeb0064a5fd41895ab34ec670a810a704dbf53a2beb3ab769d
+ARG           FROM_IMAGE_TOOLS=tools:linux-bullseye-2021-08-01@sha256:9e54b76442e4d8e1cad76acc3c982a5623b59f395b594af15bef6b489862ceac
+ARG           FROM_IMAGE_RUNTIME=base:runtime-bullseye-2021-08-01@sha256:3fdb7b859e3fea12a7604ff4ae7e577628784ac1f6ea0d5609de65a4b26e5b3c
 
 FROM          $FROM_REGISTRY/$FROM_IMAGE_TOOLS                                                                          AS builder-tools
 
@@ -33,7 +33,7 @@ COPY          build/main.go ./cmd/caddy/main.go
 RUN           --mount=type=secret,id=CA \
               --mount=type=secret,id=NETRC \
               go mod tidy; \
-              [[ "${GOFLAGS:-}" == *-mod=vendor* ]] || go mod vendor
+              [[ "${GOFLAGS:-}" == *-mod=vendor* ]] || go mod download
 
 #######################
 # Main builder
@@ -163,14 +163,16 @@ RUN           ln -s mono-sgen /dist/boot/bin/RoonServer/RoonMono/bin/RoonServer
 #######################
 FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_AUDITOR                                              AS assembly-server
 
+ARG           TARGETARCH
+
 COPY          --from=builder-server /dist/boot/bin           /dist/boot/bin
 
-COPY          --from=builder-caddy  /boot/bin/caddy          /dist/boot/bin
+COPY          --from=builder-caddy  /dist/boot/bin/caddy          /dist/boot/bin
 #COPY          --from=builder-tools  /boot/bin/caddy          /dist/boot/bin
 COPY          --from=builder-tools  /boot/bin/goello-server  /dist/boot/bin
 COPY          --from=builder-tools  /boot/bin/http-health    /dist/boot/bin
 
-RUN           setcap 'cap_net_bind_service+ep' /dist/boot/bin/caddy
+RUN           setcap 'cap_net_bind_service+ep'              /dist/boot/bin/caddy
 
 RUN           RUNNING=true \
               STATIC=true \
@@ -180,14 +182,8 @@ RUN           RUNNING=true \
               STATIC=true \
                 dubo-check validate /dist/boot/bin/goello-server
 
-RUN           [ "$TARGETARCH" != "amd64" ] || export STACK_CLASH=true; \
-              RUNNING=true \
-              BIND_NOW=true \
-              PIE=true \
-              FORTIFIED=true \
-              STACK_PROTECTED=true \
+RUN           RUNNING=true \
               RO_RELOCATIONS=true \
-              NO_SYSTEM_LINK=true \
               STATIC=true \
                 dubo-check validate /dist/boot/bin/caddy
 
