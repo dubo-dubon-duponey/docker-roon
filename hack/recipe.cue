@@ -3,7 +3,6 @@ package cake
 import (
 	"duponey.cloud/scullery"
 	"duponey.cloud/buildkit/types"
-	"strings"
 )
 
 
@@ -18,7 +17,7 @@ cakes: {
 
 			process: {
 		    target: "runtime-bridge"
-				platforms: types.#Platforms | * [
+				platforms: [
 					types.#Platforms.#AMD64,
 					types.#Platforms.#ARM64,
 					types.#Platforms.#V7,
@@ -49,7 +48,7 @@ cakes: {
 
 			process: {
 		    target: "runtime-server"
-				platforms: types.#Platforms | * [
+				platforms: [
 					types.#Platforms.#AMD64,
 				]
 			}
@@ -85,10 +84,6 @@ override: {
 
 cakes: bridge: recipe: override
 cakes: server: recipe: override
-
-if injectors.platforms != _|_ {
-	cakes: bridge: recipe: process: platforms: strings.Split(injectors.platforms, ",")
-}
 
 cakes: bridge: recipe: output: images: tags: ["bridge-" + injectors.suite + "-" + injectors.date, "bridge-" + injectors.suite + "-latest", "bridge-latest"]
 cakes: server: recipe: output: images: tags: ["server-" + injectors.suite + "-" + injectors.date, "server-" + injectors.suite + "-latest", "server-latest"]

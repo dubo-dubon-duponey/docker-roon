@@ -1,14 +1,78 @@
 ARG           FROM_REGISTRY=ghcr.io/dubo-dubon-duponey
 
+ARG           FROM_IMAGE_FETCHER=base:golang-bullseye-2021-08-01@sha256:820caa12223eb2f1329736bcba8f1ac96a8ab7db37370cbe517dbd1d9f6ca606
 ARG           FROM_IMAGE_BUILDER=base:builder-bullseye-2021-08-01@sha256:f492d8441ddd82cad64889d44fa67cdf3f058ca44ab896de436575045a59604c
-ARG           FROM_IMAGE_AUDITOR=base:auditor-bullseye-2021-08-01@sha256:a9adfa210235133d99bf06fab9a631cd6d44ee3aed6b081ad61b342fcc7d189c
+ARG           FROM_IMAGE_AUDITOR=base:auditor-bullseye-2021-08-01@sha256:0f9017945c84b48c5e9906f3325409ab446964a9e97c65a1e1820f2dd3ff1b2c
+ARG           FROM_IMAGE_TOOLS=tools:linux-bullseye-2021-08-01@sha256:cec37383d167e274e3140f2b5db8cb80d0fb406538372f0c23ba09d97ee0b2a3
 ARG           FROM_IMAGE_RUNTIME=base:runtime-bullseye-2021-08-01@sha256:edc80b2c8fd94647f793cbcb7125c87e8db2424f16b9fd0b8e173af850932b48
-ARG           FROM_IMAGE_TOOLS=tools:linux-bullseye-2021-08-01@sha256:87ec12fe94a58ccc95610ee826f79b6e57bcfd91aaeb4b716b0548ab7b2408a7
 
 FROM          $FROM_REGISTRY/$FROM_IMAGE_TOOLS                                                                          AS builder-tools
 
+FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                              AS fetcher-caddy
+
+ARG           GIT_REPO=github.com/caddyserver/caddy
+ARG           GIT_VERSION=v2.4.3
+ARG           GIT_COMMIT=9d4ed3a3236df06e54c80c4f6633b66d68ad3673
+
+ENV           WITH_BUILD_SOURCE="./cmd/caddy"
+ENV           WITH_BUILD_OUTPUT="caddy"
+
+ENV           CGO_ENABLED=1
+ENV           ENABLE_STATIC=true
+
+RUN           git clone --recurse-submodules git://"$GIT_REPO" .; git checkout "$GIT_COMMIT"
+
+ARG           GIT_REPO_REPLACE=github.com/caddyserver/replace-response
+ARG           GIT_VERSION_REPLACE=9d5652c
+ARG           GIT_COMMIT_REPLACE=9d5652c0256308fddaef1453d463d2a281498cb6
+
+RUN           echo "require $GIT_REPO_REPLACE $GIT_COMMIT_REPLACE" >> go.mod
+
+COPY          build/main.go ./cmd/caddy/main.go
+
+RUN           --mount=type=secret,id=CA \
+              --mount=type=secret,id=NETRC \
+              go mod tidy; \
+              [[ "${GOFLAGS:-}" == *-mod=vendor* ]] || go mod vendor
+
+#######################
+# Main builder
+#######################
+FROM          --platform=$BUILDPLATFORM fetcher-caddy                                                                    AS builder-caddy
+
+ARG           TARGETARCH
+ARG           TARGETOS
+ARG           TARGETVARIANT
+ENV           GOOS=$TARGETOS
+ENV           GOARCH=$TARGETARCH
+
+ENV           CGO_CFLAGS="${CFLAGS:-} ${ENABLE_PIE:+-fPIE}"
+ENV           GOFLAGS="-trimpath ${ENABLE_PIE:+-buildmode=pie} ${GOFLAGS:-}"
+
+# Important cases being handled:
+# - cannot compile statically with PIE but on amd64 and arm64
+# - cannot compile fully statically with NETCGO
+RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
+              [ "${CGO_ENABLED:-}" != 1 ] || { \
+                eval "$(dpkg-architecture -A "$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/^armv6$/armel/" -e "s/^armv7$/armhf/" -e "s/^ppc64le$/ppc64el/" -e "s/^386$/i386/")")"; \
+                export PKG_CONFIG="${DEB_TARGET_GNU_TYPE}-pkg-config"; \
+                export AR="${DEB_TARGET_GNU_TYPE}-ar"; \
+                export CC="${DEB_TARGET_GNU_TYPE}-gcc"; \
+                export CXX="${DEB_TARGET_GNU_TYPE}-g++"; \
+                [ ! "${ENABLE_STATIC:-}" ] || { \
+                  [ ! "${WITH_CGO_NET:-}" ] || { \
+                    ENABLE_STATIC=; \
+                    LDFLAGS="${LDFLAGS:-} -static-libgcc -static-libstdc++"; \
+                  }; \
+                  [ "$GOARCH" == "amd64" ] || [ "$GOARCH" == "arm64" ] || [ "${ENABLE_PIE:-}" != true ] || ENABLE_STATIC=; \
+                }; \
+                WITH_LDFLAGS="${WITH_LDFLAGS:-} -linkmode=external -extld="$CC" -extldflags \"${LDFLAGS:-} ${ENABLE_STATIC:+-static}${ENABLE_PIE:+-pie}\""; \
+                WITH_TAGS="${WITH_TAGS:-} cgo ${ENABLE_STATIC:+static static_build}"; \
+              }; \
+              go build -ldflags "-s -w -v ${WITH_LDFLAGS:-}" -tags "${WITH_TAGS:-} net${WITH_CGO_NET:+c}go osusergo" -o /dist/boot/bin/"$WITH_BUILD_OUTPUT" "$WITH_BUILD_SOURCE"
+
 ##########################
-# Building image bridge
+# Bridge: builder
 ##########################
 FROM          $FROM_REGISTRY/$FROM_IMAGE_AUDITOR                                                                        AS builder-bridge
 
@@ -36,13 +100,37 @@ RUN           rm bridge.tar.bz2
 RUN           ./RoonBridge/check.sh
 
 RUN           mkdir -p /dist/boot/lib; \
-              eval "$(dpkg-architecture -A "$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/armv6/armel/" -e "s/armv7/armhf/" -e "s/ppc64le/ppc64el/" -e "s/386/i386/")")"; \
+              eval "$(dpkg-architecture -A "$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/^armv6$/armel/" -e "s/^armv7$/armhf/" -e "s/^ppc64le$/ppc64el/" -e "s/^386$/i386/")")"; \
               cp /usr/lib/"$DEB_TARGET_MULTIARCH"/libasound.so.2  /dist/boot/lib
+
+#######################
+# Bridge: assembly
+#######################
+FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_AUDITOR                                              AS assembly-bridge
+
+COPY          --from=builder-bridge /dist/boot/bin  /dist/boot/bin
+COPY          --from=builder-bridge /usr/share/alsa /dist/usr/share/alsa
+
+RUN           chmod 555 /dist/boot/bin/*; \
+              epoch="$(date --date "$BUILD_CREATED" +%s)"; \
+              find /dist/boot -newermt "@$epoch" -exec touch --no-dereference --date="@$epoch" '{}' +;
+
+#######################
+# Bridge: runtime
+#######################
+FROM          $FROM_REGISTRY/$FROM_IMAGE_RUNTIME                                                                        AS runtime-bridge
+
+COPY          --from=assembly-bridge --chown=$BUILD_UID:root  /dist /
+
+ENV           ROON_DATAROOT=/data/data_root
+ENV           ROON_ID_DIR=/data/id_dir
+
+VOLUME        /data
+VOLUME        /tmp
 
 ##########################
 # Building image server
 ##########################
-# Better solution would be to move to auditor
 FROM          $FROM_REGISTRY/$FROM_IMAGE_AUDITOR                                                                        AS builder-server
 
 # Install dependencies and tools: bridge
@@ -70,34 +158,38 @@ RUN           ln -s mono-sgen /dist/boot/bin/RoonServer/RoonMono/bin/RAATServer
 RUN           ln -s mono-sgen /dist/boot/bin/RoonServer/RoonMono/bin/RoonAppliance
 RUN           ln -s mono-sgen /dist/boot/bin/RoonServer/RoonMono/bin/RoonServer
 
-# XXX see note in shairport-sync
-#WORKDIR       /dist/boot/lib/
-#RUN           cp /usr/lib/"$(gcc -dumpmachine)"/libasound.so.2  .
-
-#######################
-# Running image bridge
-#######################
-FROM          $FROM_REGISTRY/$FROM_IMAGE_RUNTIME                                                                        AS runtime-bridge
-
-COPY          --from=builder-bridge /usr/share/alsa /usr/share/alsa
-COPY          --from=builder-bridge --chown=$BUILD_UID:root /dist /
-
-ENV           ROON_DATAROOT=/data/data_root
-ENV           ROON_ID_DIR=/data/id_dir
-
-VOLUME        /data
-VOLUME        /tmp
-
 #######################
 # Builder assembly for server
 #######################
-FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_AUDITOR                                              AS builder
+FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_AUDITOR                                              AS assembly-server
 
-COPY          --from=builder-server   /dist/boot/bin           /dist/boot/bin
+COPY          --from=builder-server /dist/boot/bin           /dist/boot/bin
 
-COPY          --from=builder-tools  /boot/bin/caddy          /dist/boot/bin
+COPY          --from=builder-caddy  /boot/bin/caddy          /dist/boot/bin
+#COPY          --from=builder-tools  /boot/bin/caddy          /dist/boot/bin
 COPY          --from=builder-tools  /boot/bin/goello-server  /dist/boot/bin
 COPY          --from=builder-tools  /boot/bin/http-health    /dist/boot/bin
+
+RUN           setcap 'cap_net_bind_service+ep' /dist/boot/bin/caddy
+
+RUN           RUNNING=true \
+              STATIC=true \
+                dubo-check validate /dist/boot/bin/http-health
+
+RUN           RUNNING=true \
+              STATIC=true \
+                dubo-check validate /dist/boot/bin/goello-server
+
+RUN           [ "$TARGETARCH" != "amd64" ] || export STACK_CLASH=true; \
+              RUNNING=true \
+              BIND_NOW=true \
+              PIE=true \
+              FORTIFIED=true \
+              STACK_PROTECTED=true \
+              RO_RELOCATIONS=true \
+              NO_SYSTEM_LINK=true \
+              STATIC=true \
+                dubo-check validate /dist/boot/bin/caddy
 
 RUN           chmod 555 /dist/boot/bin/*; \
               epoch="$(date --date "$BUILD_CREATED" +%s)"; \
@@ -137,7 +229,7 @@ VOLUME        /music
 
 ENV           NICK="roon"
 
-COPY          --from=builder --chown=$BUILD_UID:root /dist /
+COPY          --from=assembly-server --chown=$BUILD_UID:root /dist /
 
 ### Front server configuration
 # Port to use
