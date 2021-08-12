@@ -8,6 +8,16 @@ set -o errexit -o errtrace -o functrace -o nounset -o pipefail
 
 mkdir -p "$ROON_ID_DIR"
 
+# Just a dirty little trick. This prevents Roon from rotating the logs, hence allowing us to pipe them back into stdout
+mkdir -p "$ROON_DATAROOT/RAATServer/Logs"
+mkdir -p "$ROON_DATAROOT/RoonServer/Logs"
+touch "$ROON_DATAROOT/RoonServer/Logs/RoonServer_log.txt"
+touch "$ROON_DATAROOT/RAATServer/Logs/RAATServer_log.txt"
+chmod a-w "$ROON_DATAROOT/RAATServer/Logs"
+chmod a-w "$ROON_DATAROOT/RoonServer/Logs"
+tail -f --tail 100 "$ROON_DATAROOT/RoonServer/Logs/RoonServer_log.txt"
+tail -f --tail 100 "$ROON_DATAROOT/RAATServer/Logs/RAATServer_log.txt"
+
 # There are at least unique identifiers stored in data
 # Looks like logs end up there too so, maybe some cleanup needed
 if [ ! -e /boot/bin/RoonServer/Server/RoonServer ]; then
