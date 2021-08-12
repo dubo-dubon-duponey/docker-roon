@@ -99,6 +99,7 @@ RUN           tar -xjf bridge.tar.bz2
 RUN           rm bridge.tar.bz2
 RUN           ./RoonBridge/check.sh
 
+# XXX do we NEED libasound?
 RUN           mkdir -p /dist/boot/lib; \
               eval "$(dpkg-architecture -A "$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/^armv6$/armel/" -e "s/^armv7$/armhf/" -e "s/^ppc64le$/ppc64el/" -e "s/^386$/i386/")")"; \
               cp /usr/lib/"$DEB_TARGET_MULTIARCH"/libasound.so.2  /dist/boot/lib
@@ -108,7 +109,7 @@ RUN           mkdir -p /dist/boot/lib; \
 #######################
 FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_AUDITOR                                              AS assembly-bridge
 
-COPY          --from=builder-bridge /dist/boot/bin  /dist/boot/bin
+COPY          --from=builder-bridge /dist/boot      /dist/boot
 COPY          --from=builder-bridge /usr/share/alsa /dist/usr/share/alsa
 
 RUN           chmod 555 /dist/boot/bin/*; \
@@ -121,6 +122,9 @@ RUN           chmod 555 /dist/boot/bin/*; \
 FROM          $FROM_REGISTRY/$FROM_IMAGE_RUNTIME                                                                        AS runtime-bridge
 
 COPY          --from=assembly-bridge --chown=$BUILD_UID:root  /dist /
+
+# XXX LD_LIBRARY_PATH are a liability when mixed with caps - so, watch ou
+ENV           LD_LIBRARY_PATH=/boot/lib
 
 ENV           ROON_DATAROOT=/data/data_root
 ENV           ROON_ID_DIR=/data/id_dir
@@ -165,12 +169,12 @@ FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_AUDITOR      
 
 ARG           TARGETARCH
 
-COPY          --from=builder-server /dist/boot/bin           /dist/boot/bin
+COPY          --from=builder-server /dist/boot              /dist/boot
 
-COPY          --from=builder-caddy  /dist/boot/bin/caddy          /dist/boot/bin
+COPY          --from=builder-caddy  /dist/boot/bin/caddy    /dist/boot/bin
 #COPY          --from=builder-tools  /boot/bin/caddy          /dist/boot/bin
-COPY          --from=builder-tools  /boot/bin/goello-server  /dist/boot/bin
-COPY          --from=builder-tools  /boot/bin/http-health    /dist/boot/bin
+COPY          --from=builder-tools  /boot/bin/goello-server /dist/boot/bin
+COPY          --from=builder-tools  /boot/bin/http-health   /dist/boot/bin
 
 RUN           setcap 'cap_net_bind_service+ep'              /dist/boot/bin/caddy
 

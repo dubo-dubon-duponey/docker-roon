@@ -36,9 +36,7 @@ jobs:
           echo OWMyMGVhYzk4N2NhYWQxYmI3MzhmNTZkODNmOGMwOGJjZjlhNDc4YQo= | base64 -d | docker login ghcr.io -u dubo-dubon-duponey --password-stdin
           mkdir -p "$GITHUB_WORKSPACE/cache/apt"
           mkdir -p "$GITHUB_WORKSPACE/cache/certs"
-          chmod a+rwx "$GITHUB_WORKSPACE/cache/apt"
-          chmod a+rwx "$GITHUB_WORKSPACE/cache/certs"
-          chown -R 1000:root "$GITHUB_WORKSPACE/cache"
+          sudo chown -R 2000:root "$GITHUB_WORKSPACE/cache"
           docker run --rm -d --expose 443 --expose 80 --pull always \
             --name apt-front \
             --read-only \
