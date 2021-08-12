@@ -21,6 +21,11 @@ touch "$ROON_DATAROOT/RAATServer/Logs/RAATServer_log.txt"
 tail -F "$ROON_DATAROOT/RoonServer/Logs/RoonServer_log.txt" &
 tail -F "$ROON_DATAROOT/RAATServer/Logs/RAATServer_log.txt" &
 
+# error”, “critical”, “warning”, “message”, “info”, and “debug”
+# Looks like ROON ignore these
+#MONO_LOG_LEVEL="$(printf "%s" "${LOG_LEVEL:-error}" | tr '[:upper:]' '[:lower:]' | sed -E 's/^(warn)$/warning/')"
+#export MONO_LOG_LEVEL
+
 # There are at least unique identifiers stored in data
 # Looks like logs end up there too so, maybe some cleanup needed
 if [ ! -e /boot/bin/RoonServer/Server/RoonServer ]; then
