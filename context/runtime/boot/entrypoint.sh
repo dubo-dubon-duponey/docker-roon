@@ -1,24 +1,35 @@
 #!/usr/bin/env bash
 set -o errexit -o errtrace -o functrace -o nounset -o pipefail
 
+# Roon stores extensive settings, permanent id and logs in there
 [ -w /data ] || {
   printf >&2 "/data is not writable. Check your mount permissions.\n"
+  exit 1
+}
+
+# Roon still uses this for a lock (?) file
+# Caddy will, as well
+[ -w /tmp ] || {
+  printf >&2 "/tmp is not writable. Check your mount permissions.\n"
   exit 1
 }
 
 mkdir -p "$ROON_ID_DIR"
 
 # Just a dirty little trick. First, ensure the directories are here.
-mkdir -p "$ROON_DATAROOT/RAATServer/Logs"
 mkdir -p "$ROON_DATAROOT/RoonServer/Logs"
+mkdir -p "$ROON_DATAROOT/RoonBridge/Logs"
+mkdir -p "$ROON_DATAROOT/RAATServer/Logs"
 # Now, touch the logs
 touch "$ROON_DATAROOT/RoonServer/Logs/RoonServer_log.txt"
+touch "$ROON_DATAROOT/RoonBridge/Logs/RoonBridge_log.txt"
 touch "$ROON_DATAROOT/RAATServer/Logs/RAATServer_log.txt"
 # Kill write permissions on the directory, preventing Roon to rotate the files out
 #chmod a-w "$ROON_DATAROOT/RAATServer/Logs"
 #chmod a-w "$ROON_DATAROOT/RoonServer/Logs"
 # Now it"s safe to slurp them back in stdout, but watch for rotate
 tail -F "$ROON_DATAROOT/RoonServer/Logs/RoonServer_log.txt" &
+tail -F "$ROON_DATAROOT/RoonBridge/Logs/RoonBridge_log.txt" &
 tail -F "$ROON_DATAROOT/RAATServer/Logs/RAATServer_log.txt" &
 
 # error”, “critical”, “warning”, “message”, “info”, and “debug”
@@ -26,19 +37,13 @@ tail -F "$ROON_DATAROOT/RAATServer/Logs/RAATServer_log.txt" &
 #MONO_LOG_LEVEL="$(printf "%s" "${LOG_LEVEL:-error}" | tr '[:upper:]' '[:lower:]' | sed -E 's/^(warn)$/warning/')"
 #export MONO_LOG_LEVEL
 
-# There are at least unique identifiers stored in data
-# Looks like logs end up there too so, maybe some cleanup needed
 if [ ! -e /boot/bin/RoonServer/Server/RoonServer ]; then
   exec /boot/bin/RoonBridge/Bridge/RoonBridge
 fi
 
+# Caddy uses this
 [ -w /certs ] || {
   printf >&2 "/certs is not writable. Check your mount permissions.\n"
-  exit 1
-}
-
-[ -w /tmp ] || {
-  printf >&2 "/tmp is not writable. Check your mount permissions.\n"
   exit 1
 }
 
