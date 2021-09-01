@@ -17,17 +17,9 @@ set -o errexit -o errtrace -o functrace -o nounset -o pipefail
 mkdir -p "$ROON_ID_DIR"
 
 # Just a dirty little trick. First, ensure the directories are here.
-mkdir -p "$ROON_DATAROOT/RoonServer/Logs"
-mkdir -p "$ROON_DATAROOT/RoonBridge/Logs"
-mkdir -p "$ROON_DATAROOT/RAATServer/Logs"
-# Now, touch the logs
-touch "$ROON_DATAROOT/RoonServer/Logs/RoonServer_log.txt"
-touch "$ROON_DATAROOT/RoonBridge/Logs/RoonBridge_log.txt"
-touch "$ROON_DATAROOT/RAATServer/Logs/RAATServer_log.txt"
-# Kill write permissions on the directory, preventing Roon to rotate the files out
-#chmod a-w "$ROON_DATAROOT/RAATServer/Logs"
-#chmod a-w "$ROON_DATAROOT/RoonServer/Logs"
-# Now it"s safe to slurp them back in stdout, but watch for rotate
+#mkdir -p "$ROON_DATAROOT/RoonServer/Logs"
+#mkdir -p "$ROON_DATAROOT/RoonBridge/Logs"
+#mkdir -p "$ROON_DATAROOT/RAATServer/Logs"
 tail -F "$ROON_DATAROOT/RoonServer/Logs/RoonServer_log.txt" &
 tail -F "$ROON_DATAROOT/RoonBridge/Logs/RoonBridge_log.txt" &
 tail -F "$ROON_DATAROOT/RAATServer/Logs/RAATServer_log.txt" &
