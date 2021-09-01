@@ -19,7 +19,6 @@ Two Docker images for Roon Bridge & Roon Server
  * observable
     * [ ] healthcheck (server only)
     * [x] log to stdout
-    * [ ] ~~prometheus endpoint~~ not applicable
 
 ## Run
 
@@ -39,6 +38,7 @@ docker run -d \
     --name server \
     --read-only \
     --cap-drop ALL \
+    --cap-add NET_BIND_SERVICE \
     --group-add audio \
     --device /dev/snd \
     --rm \
