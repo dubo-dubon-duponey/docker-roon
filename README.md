@@ -13,14 +13,12 @@ Two Docker images for Roon Bridge & Roon Server
     * [x] image runs with no capabilities
     * [x] process runs as a non-root user, disabled login, no shell
  * lightweight
-    * [x] based on our slim [Debian buster version](https://github.com/dubo-dubon-duponey/docker-debian)
+    * [x] based on our slim [Debian Bullseye](https://github.com/dubo-dubon-duponey/docker-debian)
     * [x] simple entrypoint script
     * [ ] multi-stage build with no installed dependencies for the Bridge runtime image, one dependency for Server (ffmpeg)
  * observable
     * [ ] healthcheck (server only)
     * [x] log to stdout
-    * [ ] ~~prometheus endpoint~~ not applicable
-
 
 ## Run
 
@@ -33,17 +31,18 @@ docker run -d \
     --group-add audio \
     --device /dev/snd \
     --rm \
-    dubodubonduponey/roon-bridge
+    ghcr.io/dubo-dubon-duponey/roon-bridge
 
 docker run -d \
     --net host \
     --name server \
     --read-only \
     --cap-drop ALL \
+    --cap-add NET_BIND_SERVICE \
     --group-add audio \
     --device /dev/snd \
     --rm \
-    dubodubonduponey/roon-server
+    ghcr.io/dubo-dubon-duponey/roon-server
 ```
 
 ## GOTCHA

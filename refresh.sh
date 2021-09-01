@@ -17,21 +17,21 @@ geturl(){
       url="armv7hf"
     ;;
   esac
-  printf "http://download.roonlabs.com/builds/RoonBridge_linux%s.tar.bz2" "$url"
+  printf "https://download.roonlabs.com/builds/RoonBridge_linux%s.tar.bz2" "$url"
 }
 
 for platform in linux/amd64 linux/arm64 linux/arm/v7; do
   mkdir -p ./context/cache/"$platform"
-  if ! curl -fsSL -o ./context/cache/"$platform"/bridge.tar.bz2 "$(geturl "${platform}")"; then
+  if ! curl --proto '=https' --tlsv1.2 -sSfL -o ./context/cache/"$platform"/bridge.tar.bz2 "$(geturl "${platform}")"; then
     rm -f ./context/cache/"$platform"/bridge.tar.bz2
-    >&2 printf "Failed to download bits!\n"
+    printf >&2 "Failed to download bits!\n"
     exit 1
   fi
 done
 
 mkdir -p ./context/cache/linux/amd64
-if ! curl -fsSL -o ./context/cache/linux/amd64/server.tar.bz2 "http://download.roonlabs.com/builds/RoonServer_linuxx64.tar.bz2"; then
+if ! curl --proto '=https' --tlsv1.2 -sSfL -o ./context/cache/linux/amd64/server.tar.bz2 "https://download.roonlabs.com/builds/RoonServer_linuxx64.tar.bz2"; then
   rm -f ./context/cache/linux/amd64/server.tar.bz2
-  >&2 printf "Failed to download bits!\n"
+  printf >&2 "Failed to download bits!\n"
   exit 1
 fi
