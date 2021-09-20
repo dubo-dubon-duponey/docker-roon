@@ -1,10 +1,10 @@
 ARG           FROM_REGISTRY=ghcr.io/dubo-dubon-duponey
 
 ARG           FROM_IMAGE_FETCHER=base:golang-bullseye-2021-09-01@sha256:5f511b94c06380c64a5f67a4a9ea1751d0537a96310a6c6980ef54ed1898702c
-ARG           FROM_IMAGE_BUILDER=base:builder-bullseye-2021-09-01@sha256:12be2a6d0a64b59b1fc44f9b420761ad92efe8188177171163b15148b312481a
-ARG           FROM_IMAGE_AUDITOR=base:auditor-bullseye-2021-09-01@sha256:28d5eddcbbee12bc671733793c8ea8302d7d79eb8ab9ba0581deeacabd307cf5
-ARG           FROM_IMAGE_TOOLS=tools:linux-bullseye-2021-09-01@sha256:e5535efb771ca60d2a371cd2ca2eb1a7d6b7b13cc5c4d27d48613df1a041431d
-ARG           FROM_IMAGE_RUNTIME=base:runtime-bullseye-2021-09-01@sha256:bbd3439247ea1aa91b048e77c8b546369138f910b5083de697f0d36ac21c1a8c
+ARG           FROM_IMAGE_BUILDER=base:builder-bullseye-2021-09-15@sha256:a3d4c4de18d540fe3cb07e267511ba2afd5578f18840cd73c063277672e74119
+ARG           FROM_IMAGE_AUDITOR=base:auditor-bullseye-2021-09-15@sha256:6360e479e39b3c8e1491f599609039544e4e804595fcc8055e29d8615566fb3e
+ARG           FROM_IMAGE_TOOLS=tools:linux-bullseye-2021-09-15@sha256:4271d38084f446152f778f343c8878508ee7a833c282ea0c418f9f80123b1c46
+ARG           FROM_IMAGE_RUNTIME=base:runtime-bullseye-2021-09-15@sha256:71341017729371c120ad7e97699c1d0aa39c7478cf4dbe67a0083680cf7b8e73
 
 FROM          $FROM_REGISTRY/$FROM_IMAGE_TOOLS                                                                          AS builder-tools
 
@@ -233,9 +233,9 @@ COPY          --from=assembly-server --chown=$BUILD_UID:root /dist /
 
 ### Front server configuration
 # Port to use
-ENV           PORT=4443
+ENV           PORT=443
 ENV           PORT_HTTP=80
-EXPOSE        4443
+EXPOSE        443
 EXPOSE        80
 # Log verbosity for
 ENV           LOG_LEVEL="warn"
@@ -247,11 +247,13 @@ ENV           ADDITIONAL_DOMAINS=""
 ENV           SERVER_NAME="DuboDubonDuponey/1.0 (Caddy/2) [$NICK]"
 
 # Control wether tls is going to be "internal" (eg: self-signed), or alternatively an email address to enable letsencrypt
-ENV           TLS="internal"
+ENV           TLS_MODE="internal"
 # 1.2 or 1.3
 ENV           TLS_MIN=1.2
 # Either require_and_verify or verify_if_given
-ENV           TLS_MTLS_MODE="verify_if_given"
+ENV           MTLS_ENABLED=true
+ENV           MTLS_MODE="verify_if_given"
+ENV           MTLS_TRUST="/certs/pki/authorities/local/root.crt"
 # Issuer name to appear in certificates
 #ENV           TLS_ISSUER="Dubo Dubon Duponey"
 # Either disable_redirects or ignore_loaded_certs if one wants the redirects

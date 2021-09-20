@@ -50,11 +50,11 @@ case "${1:-run}" in
   ;;
   # Helper to get the ca.crt out (once initialized)
 "cert")
-  if [ "${TLS:-}" == "" ]; then
+  if [ "${TLS_MODE:-}" == "" ]; then
     printf >&2 "Your container is not configured for TLS termination - there is no local CA in that case."
     exit 1
   fi
-  if [ "${TLS:-}" != "internal" ]; then
+  if [ "${TLS_MODE:-}" != "internal" ]; then
     printf >&2 "Your container uses letsencrypt - there is no local CA in that case."
     exit 1
   fi
@@ -72,7 +72,7 @@ case "${1:-run}" in
   fi
 
   # If we want TLS and authentication, start caddy in the background
-  if [ "${TLS:-}" ]; then
+  if [ "${TLS_MODE:-}" ]; then
     HOME=/tmp/caddy-home caddy run -config /config/caddy/main.conf --adapter caddyfile &
   fi
   ;;
