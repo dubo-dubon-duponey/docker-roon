@@ -28,6 +28,7 @@ ARG           GIT_COMMIT_REPLACE=9d5652c0256308fddaef1453d463d2a281498cb6
 
 RUN           echo "require $GIT_REPO_REPLACE $GIT_COMMIT_REPLACE" >> go.mod
 
+# hadolint ignore=DL3045
 COPY          build/main.go ./cmd/caddy/main.go
 
 RUN           --mount=type=secret,id=CA \
