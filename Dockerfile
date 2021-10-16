@@ -11,6 +11,7 @@ FROM          $FROM_REGISTRY/$FROM_IMAGE_TOOLS                                  
 FROM          --platform=$BUILDPLATFORM $FROM_REGISTRY/$FROM_IMAGE_BUILDER                                              AS fetcher-caddy
 
 ARG           GIT_REPO=github.com/caddyserver/caddy
+# 2.4.5 need tweak to scep (minor version bump), but then the build segfaults
 ARG           GIT_VERSION=v2.4.3
 ARG           GIT_COMMIT=9d4ed3a3236df06e54c80c4f6633b66d68ad3673
 
@@ -21,6 +22,11 @@ ENV           CGO_ENABLED=1
 ENV           ENABLE_STATIC=true
 
 RUN           git clone --recurse-submodules git://"$GIT_REPO" .; git checkout "$GIT_COMMIT"
+
+# scep v2.0.0 checksum does not match anymore
+# It's unclear whether the rename of the module to v2 is responsible, but one way or the other this
+# *critical* module is suspicious
+# RUN           echo "replace github.com/micromdm/scep/v2 v2.0.0 => github.com/micromdm/scep/v2 v2.1.0" >> go.mod
 
 ARG           GIT_REPO_REPLACE=github.com/caddyserver/replace-response
 ARG           GIT_VERSION_REPLACE=9d5652c
@@ -50,9 +56,6 @@ ENV           GOARCH=$TARGETARCH
 ENV           CGO_CFLAGS="${CFLAGS:-} ${ENABLE_PIE:+-fPIE}"
 ENV           GOFLAGS="-trimpath ${ENABLE_PIE:+-buildmode=pie} ${GOFLAGS:-}"
 
-# Important cases being handled:
-# - cannot compile statically with PIE but on amd64 and arm64
-# - cannot compile fully statically with NETCGO
 RUN           export GOARM="$(printf "%s" "$TARGETVARIANT" | tr -d v)"; \
               [ "${CGO_ENABLED:-}" != 1 ] || { \
                 eval "$(dpkg-architecture -A "$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/^armv6$/armel/" -e "s/^armv7$/armhf/" -e "s/^ppc64le$/ppc64el/" -e "s/^386$/i386/")")"; \
@@ -124,7 +127,8 @@ FROM          $FROM_REGISTRY/$FROM_IMAGE_RUNTIME                                
 
 COPY          --from=assembly-bridge --chown=$BUILD_UID:root  /dist /
 
-# XXX LD_LIBRARY_PATH are a liability when mixed with caps - so, watch ou
+# XXX LD_LIBRARY_PATH are a liability when mixed with caps - so, watch out
+# Alternative is rpathing, but what exactly?
 ENV           LD_LIBRARY_PATH=/boot/lib
 
 ENV           ROON_DATAROOT=/data/data_root
@@ -174,7 +178,7 @@ COPY          --from=builder-server /dist/boot              /dist/boot
 
 COPY          --from=builder-caddy  /dist/boot/bin/caddy    /dist/boot/bin
 #COPY          --from=builder-tools  /boot/bin/caddy          /dist/boot/bin
-COPY          --from=builder-tools  /boot/bin/goello-server /dist/boot/bin
+COPY          --from=builder-tools  /boot/bin/goello-server-ng /dist/boot/bin
 COPY          --from=builder-tools  /boot/bin/http-health   /dist/boot/bin
 
 RUN           setcap 'cap_net_bind_service+ep'              /dist/boot/bin/caddy
@@ -263,11 +267,11 @@ ENV           AUTH="My Precious Realm"
 ENV           AUTH_USERNAME="dubo-dubon-duponey"
 ENV           AUTH_PASSWORD="cmVwbGFjZV9tZV93aXRoX3NvbWV0aGluZwo="
 ### mDNS broadcasting
-# Type to advertise - set to empty string to disable mDNS altogether
-ENV           MDNS="_http._tcp"
+# Type to advertise
+ENV           MDNS_TYPE="_http._tcp"
 # Name is used as a short description for the service
 ENV           MDNS_NAME="$NICK mDNS display name"
-# The service will be annonced and reachable at $MDNS_HOST.local
+# The service will be annonced and reachable at $MDNS_HOST.local (set to empty string to disable mDNS announces entirely)
 ENV           MDNS_HOST="$NICK"
 # Also announce the service as a workstation (for example for the benefit of coreDNS mDNS)
 ENV           MDNS_STATION=true

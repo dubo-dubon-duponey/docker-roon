@@ -1,21 +1,15 @@
 #!/usr/bin/env bash
 set -o errexit -o errtrace -o functrace -o nounset -o pipefail
 
-ensure::writable(){
-  local dir="$1"
-  printf >&2 "Verifying that %s is writable\n" "$dir"
-  [ -w "$dir" ] || {
-    printf >&2 "%s is not writable. Check your mount permissions.\n" "$dir"
+helpers::dir::writable(){
+  local path="$1"
+  local create="${2:-}"
+  # shellcheck disable=SC2015
+  ( [ ! "$create" ] || mkdir -p "$path" 2>/dev/null ) && [ -w "$path" ] && [ -d "$path" ] || {
+    printf >&2 "%s does not exist, is not writable, or cannot be created. Check your mount permissions.\n" "$path"
     exit 1
   }
 }
-
-ensure::writable "/certs"
-ensure::writable "/data"
-ensure::writable "/tmp"
-mkdir -p "$XDG_RUNTIME_DIR"
-mkdir -p "$XDG_STATE_HOME"
-mkdir -p "$XDG_CACHE_HOME"
 
 run::hash(){
   printf >&2 "Generating password hash\n"
@@ -40,34 +34,6 @@ run::certificate(){
   cat /certs/pki/authorities/local/root.crt
 }
 
-start::mdns(){
-  local type="$1"
-  local name="$2"
-  local host="$3"
-  local port="$4"
-  local workstation="${5:-true}"
-  local text="${6:-}"
-  [ "$text" ] || text="{}"
-
-  local records
-
-  if [ "$workstation" == true ]; then
-    records="$(printf \
-      '[{"Type": "%s", "Name": "%s", "Host": "%s", "Port": %s, "Text": %s},
-      {"Type": "%s", "Name": "%s", "Host": "%s", "Port": %s, "Text": %s}]' \
-      "_workstation._tcp" "$name" "$host" "$port" "$text" \
-      "$type"             "$name" "$host" "$port" "$text" \
-    )"
-  else
-    records="$(printf \
-      '[{"Type": "%s", "Name": "%s", "Host": "%s", "Port": %s, "Text": %s}]' \
-      "$type"             "$name" "$host" "$port" "$text" \
-    )"
-  fi
-
-  goello-server -json "$records" &
-}
-
 start::sidecar(){
   local disable_tls=""
   local disable_mtls=""
@@ -86,7 +52,7 @@ start::sidecar(){
     secure=
   }
 
-  HOME=/tmp/caddy-home \
+  XDG_CONFIG_HOME=/tmp \
   CDY_SERVER_NAME=${SERVER_NAME:-DuboDubonDuponey/1.0} \
   CDY_LOG_LEVEL=${LOG_LEVEL:-error} \
   CDY_SCHEME="http${secure:-}" \
@@ -106,7 +72,7 @@ start::sidecar(){
   CDY_HEALTHCHECK_URL="$HEALTHCHECK_URL" \
   CDY_PORT_HTTP="$PORT_HTTP" \
   CDY_PORT_HTTPS="$PORT_HTTPS" \
-    caddy run -config /config/caddy/main.conf --adapter caddyfile &
+    caddy run -config /config/caddy/main.conf --adapter caddyfile "$@"
 }
 
 # Helpers
@@ -125,14 +91,3 @@ case "${1:-}" in
   ;;
 esac
 
-# Bonjour the container if asked to
-[ "${MDNS:-}" == "" ] || \
-  start::mdns \
-    "${MDNS:-_http._tcp}" \
-    "${MDNS_NAME:-service}" \
-    "${MDNS_HOST:-service}" \
-    "$([ "$TLS" != "" ] && printf "%s" "${PORT_HTTPS:-443}" || printf "%s" "${PORT_HTTP:-80}")"
-    "${MDNS_STATION:-true}"
-
-# Start the sidecar
-start::sidecar
