@@ -189,7 +189,7 @@ RUN           RUNNING=true \
 
 RUN           RUNNING=true \
               STATIC=true \
-                dubo-check validate /dist/boot/bin/goello-server
+                dubo-check validate /dist/boot/bin/goello-server-ng
 
 RUN           RUNNING=true \
               RO_RELOCATIONS=true \
