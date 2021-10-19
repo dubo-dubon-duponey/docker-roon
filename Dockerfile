@@ -185,15 +185,9 @@ RUN           setcap 'cap_net_bind_service+ep'              /dist/boot/bin/caddy
 
 RUN           RUNNING=true \
               STATIC=true \
-                dubo-check validate /dist/boot/bin/http-health
+                dubo-check validate /dist/boot/bin/*
 
-RUN           RUNNING=true \
-              STATIC=true \
-                dubo-check validate /dist/boot/bin/goello-server-ng
-
-RUN           RUNNING=true \
-              RO_RELOCATIONS=true \
-              STATIC=true \
+RUN           RO_RELOCATIONS=true \
                 dubo-check validate /dist/boot/bin/caddy
 
 RUN           chmod 555 /dist/boot/bin/*; \
