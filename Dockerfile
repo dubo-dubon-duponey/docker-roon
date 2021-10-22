@@ -255,6 +255,13 @@ ENV           TLS_MIN=1.3
 #ENV           TLS_ISSUER="Dubo Dubon Duponey"
 # Either disable_redirects or ignore_loaded_certs if one wants the redirects
 ENV           TLS_AUTO=disable_redirects
+# Staging
+# https://acme-staging-v02.api.letsencrypt.org/directory
+# Plain
+# https://acme-v02.api.letsencrypt.org/directory
+# PKI
+# https://pki.local
+ENV           TLS_SERVER="https://acme-v02.api.letsencrypt.org/directory"
 # Either require_and_verify or verify_if_given, or "" to disable mTLS altogether
 ENV           MTLS="require_and_verify"
 # Root certificate to trust for mTLS

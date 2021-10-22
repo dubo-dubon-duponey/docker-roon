@@ -72,6 +72,7 @@ start::sidecar(){
   CDY_HEALTHCHECK_URL="$HEALTHCHECK_URL" \
   CDY_PORT_HTTP="$PORT_HTTP" \
   CDY_PORT_HTTPS="$PORT_HTTPS" \
+  CDY_ACME_CA="$TLS_SERVER" \
     caddy run -config /config/caddy/main.conf --adapter caddyfile "$@"
 }
 
