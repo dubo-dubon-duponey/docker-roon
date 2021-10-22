@@ -52,7 +52,7 @@ start::sidecar(){
     secure=
   }
 
-  XDG_CONFIG_HOME=/tmp \
+  XDG_CONFIG_HOME=/tmp/config \
   CDY_SERVER_NAME=${SERVER_NAME:-DuboDubonDuponey/1.0} \
   CDY_LOG_LEVEL=${LOG_LEVEL:-error} \
   CDY_SCHEME="http${secure:-}" \
