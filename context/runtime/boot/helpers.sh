@@ -53,7 +53,7 @@ start::sidecar(){
   }
 
   XDG_CONFIG_HOME=/tmp/config \
-  CDY_SERVER_NAME=${SERVER_NAME:-DuboDubonDuponey/1.0} \
+  CDY_SERVER_NAME=${ADVANCED_SERVER_NAME:-DuboDubonDuponey/1.0} \
   CDY_LOG_LEVEL=${LOG_LEVEL:-error} \
   CDY_SCHEME="http${secure:-}" \
   CDY_DOMAIN="${DOMAIN:-}" \
@@ -64,14 +64,14 @@ start::sidecar(){
   CDY_AUTH_PASSWORD="${AUTH_PASSWORD:-}" \
   CDY_TLS_DISABLE="$disable_tls" \
   CDY_TLS_MODE="$TLS" \
-  CDY_TLS_MIN="${TLS_MIN:-1.3}" \
+  CDY_TLS_MIN="${ADVANCED_TLS_MIN:-1.3}" \
   CDY_TLS_AUTO="${TLS_AUTO:-disable_redirects}" \
   CDY_MTLS_DISABLE="$disable_mtls" \
   CDY_MTLS_MODE="$MTLS" \
-  CDY_MTLS_TRUST="${MTLS_TRUST:-}" \
+  CDY_MTLS_TRUST="${ADVANCED_MTLS_TRUST:-}" \
   CDY_HEALTHCHECK_URL="$HEALTHCHECK_URL" \
-  CDY_PORT_HTTP="$PORT_HTTP" \
-  CDY_PORT_HTTPS="$PORT_HTTPS" \
+  CDY_PORT_HTTP="${ADVANCED_PORT_HTTP:-80}" \
+  CDY_PORT_HTTPS="${ADVANCED_PORT_HTTPS:-443}" \
   CDY_ACME_CA="$TLS_SERVER" \
     caddy run -config /config/caddy/main.conf --adapter caddyfile "$@"
 }

@@ -235,22 +235,25 @@ ENV           _SERVICE_TYPE="http"
 COPY          --from=assembly --chown=$BUILD_UID:root /dist /
 
 ### Front server configuration
-# Port to use
-ENV           PORT_HTTPS=443
-ENV           PORT_HTTP=80
+## Advanced settings that usually should not be changed
+# Ports for http and https - recent changes in docker make it no longer necessary to have caps, plus we have our NET_BIND_SERVICE cap set anyhow - it's 2021, there is no reason to keep on venerating privileged ports
+ENV           ADVANCED_PORT_HTTPS=443
+ENV           ADVANCED_PORT_HTTP=80
 EXPOSE        443
 EXPOSE        80
+# By default, tls should be restricted to 1.3 - you may downgrade to 1.2+ for compatibility with older clients (webdav client on macos, older browsers)
+ENV           ADVANCED_TLS_MIN=1.3
+# Name advertised by Caddy in the server http header
+ENV           ADVANCED_SERVER_NAME="DuboDubonDuponey/1.0 (Caddy/2) [$_SERVICE_NICK]"
+# Root certificate to trust for mTLS - this is not used if MTLS is disabled
+ENV           ADVANCED_MTLS_TRUST="/certs/mtls_ca.crt"
 # Log verbosity for
 ENV           LOG_LEVEL="warn"
 # Domain name to serve
 ENV           DOMAIN="$_SERVICE_NICK.local"
 ENV           ADDITIONAL_DOMAINS="https://*.debian.org"
-# Whether the server should behave as a proxy (disallows mTLS)
-ENV           SERVER_NAME="DuboDubonDuponey/1.0 (Caddy/2) [$_SERVICE_NICK]"
 # Control wether tls is going to be "internal" (eg: self-signed), or alternatively an email address to enable letsencrypt - use "" to disable TLS entirely
 ENV           TLS="internal"
-# 1.2 or 1.3
-ENV           TLS_MIN=1.3
 # Issuer name to appear in certificates
 #ENV           TLS_ISSUER="Dubo Dubon Duponey"
 # Either disable_redirects or ignore_loaded_certs if one wants the redirects
@@ -264,8 +267,6 @@ ENV           TLS_AUTO=disable_redirects
 ENV           TLS_SERVER="https://acme-v02.api.letsencrypt.org/directory"
 # Either require_and_verify or verify_if_given, or "" to disable mTLS altogether
 ENV           MTLS="require_and_verify"
-# Root certificate to trust for mTLS
-ENV           MTLS_TRUST="/certs/mtls_ca.crt"
 # Realm for authentication - set to "" to disable authentication entirely
 ENV           AUTH="My Precious Realm"
 # Provide username and password here (call the container with the "hash" command to generate a properly encrypted password, otherwise, a random one will be generated)
