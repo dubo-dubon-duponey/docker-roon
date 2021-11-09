@@ -1,10 +1,10 @@
 ARG           FROM_REGISTRY=ghcr.io/dubo-dubon-duponey
 
-ARG           FROM_IMAGE_FETCHER=base:golang-bullseye-2021-10-15@sha256:a35b057a1f360f1af4bc4743ca82cc3dbfce7c06599fcc6b531d592cbbf2fe12
-ARG           FROM_IMAGE_BUILDER=base:builder-bullseye-2021-10-15@sha256:1609d1af44c0048ec0f2e208e6d4e6a525c6d6b1c0afcc9d71fccf985a8b0643
-ARG           FROM_IMAGE_AUDITOR=base:auditor-bullseye-2021-10-15@sha256:2c95e3bf69bc3a463b00f3f199e0dc01cab773b6a0f583904ba6766b3401cb7b
-ARG           FROM_IMAGE_TOOLS=tools:linux-bullseye-2021-10-15@sha256:4de02189b785c865257810d009e56f424d29a804cc2645efb7f67b71b785abde
-ARG           FROM_IMAGE_RUNTIME=base:runtime-bullseye-2021-10-15@sha256:5c54594a24e3dde2a82e2027edd6d04832204157e33775edc66f716fa938abba
+ARG           FROM_IMAGE_FETCHER=base:golang-bullseye-2021-11-01@sha256:27069d776a0cd49bc03119db3b15ff763bf13a54c7f5ebd97dd16a399f06d934
+ARG           FROM_IMAGE_BUILDER=base:builder-bullseye-2021-11-01@sha256:23e78693390afaf959f940de6d5f9e75554979d84238503448188a7f30f34a7d
+ARG           FROM_IMAGE_AUDITOR=base:auditor-bullseye-2021-11-01@sha256:965d2e581c2b824bc03853d7b736c6b8e556e519af2cceb30c39c77ee0178404
+ARG           FROM_IMAGE_TOOLS=tools:linux-bullseye-2021-11-01@sha256:8ee6c2243bacfb2ec1a0010a9b1bf41209330ae940c6f88fee9c9e99f9cb705d
+ARG           FROM_IMAGE_RUNTIME=base:runtime-bullseye-2021-11-01@sha256:c29f582f211999ba573b8010cdf623e695cc0570d2de6c980434269357a3f8ef
 
 FROM          $FROM_REGISTRY/$FROM_IMAGE_TOOLS                                                                          AS builder-tools
 
@@ -29,8 +29,8 @@ RUN           git clone --recurse-submodules git://"$GIT_REPO" .; git checkout "
 # RUN           echo "replace github.com/micromdm/scep/v2 v2.0.0 => github.com/micromdm/scep/v2 v2.1.0" >> go.mod
 
 ARG           GIT_REPO_REPLACE=github.com/caddyserver/replace-response
-ARG           GIT_VERSION_REPLACE=9d5652c
-ARG           GIT_COMMIT_REPLACE=9d5652c0256308fddaef1453d463d2a281498cb6
+ARG           GIT_VERSION_REPLACE=8fa6a90
+ARG           GIT_COMMIT_REPLACE=8fa6a90147d10fa192ad9fd1df2b97c1844ed322
 
 RUN           echo "require $GIT_REPO_REPLACE $GIT_COMMIT_REPLACE" >> go.mod
 
@@ -249,6 +249,8 @@ ENV           ADVANCED_SERVER_NAME="DuboDubonDuponey/1.0 (Caddy/2) [$_SERVICE_NI
 ENV           ADVANCED_MTLS_TRUST="/certs/mtls_ca.crt"
 # Log verbosity for
 ENV           LOG_LEVEL="warn"
+# Whether to start caddy at all or not
+ENV           PROXY_HTTPS_ENABLED=true
 # Domain name to serve
 ENV           DOMAIN="$_SERVICE_NICK.local"
 ENV           ADDITIONAL_DOMAINS="https://*.debian.org"
@@ -273,6 +275,8 @@ ENV           AUTH="My Precious Realm"
 ENV           AUTH_USERNAME="dubo-dubon-duponey"
 ENV           AUTH_PASSWORD="cmVwbGFjZV9tZV93aXRoX3NvbWV0aGluZwo="
 ### mDNS broadcasting
+# Whether to enable MDNS broadcasting or not
+ENV           MDNS_ENABLED=true
 # Type to advertise
 ENV           MDNS_TYPE="_$_SERVICE_TYPE._tcp"
 # Name is used as a short description for the service
