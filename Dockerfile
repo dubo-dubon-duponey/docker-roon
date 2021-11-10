@@ -163,11 +163,15 @@ WORKDIR       /dist/boot/bin
 COPY          "./cache/linux/amd64/server.tar.bz2" .
 RUN           tar -xjf server.tar.bz2
 RUN           rm server.tar.bz2
-RUN           ./RoonServer/check.sh
 
-RUN           ln -s mono-sgen /dist/boot/bin/RoonServer/RoonMono/bin/RAATServer
-RUN           ln -s mono-sgen /dist/boot/bin/RoonServer/RoonMono/bin/RoonAppliance
-RUN           ln -s mono-sgen /dist/boot/bin/RoonServer/RoonMono/bin/RoonServer
+RUN           ln -s dotnet /dist/boot/bin/RoonServer/RoonDotnet/RoonServer
+RUN           ln -s dotnet /dist/boot/bin/RoonServer/RoonDotnet/RoonAppliance
+RUN           ln -s dotnet /dist/boot/bin/RoonServer/RoonDotnet/RAATServer
+
+RUN           ./RoonServer/check.sh
+#RUN           ln -s mono-sgen /dist/boot/bin/RoonServer/RoonMono/bin/RAATServer
+#RUN           ln -s mono-sgen /dist/boot/bin/RoonServer/RoonMono/bin/RoonAppliance
+#RUN           ln -s mono-sgen /dist/boot/bin/RoonServer/RoonMono/bin/RoonServer
 
 #######################
 # Builder assembly for server
