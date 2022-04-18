@@ -1,10 +1,10 @@
 ARG           FROM_REGISTRY=ghcr.io/dubo-dubon-duponey
 
-ARG           FROM_IMAGE_FETCHER=base:golang-bullseye-2021-11-01@sha256:27069d776a0cd49bc03119db3b15ff763bf13a54c7f5ebd97dd16a399f06d934
-ARG           FROM_IMAGE_BUILDER=base:builder-bullseye-2021-11-01@sha256:23e78693390afaf959f940de6d5f9e75554979d84238503448188a7f30f34a7d
-ARG           FROM_IMAGE_AUDITOR=base:auditor-bullseye-2021-11-01@sha256:965d2e581c2b824bc03853d7b736c6b8e556e519af2cceb30c39c77ee0178404
-ARG           FROM_IMAGE_TOOLS=tools:linux-bullseye-2021-11-01@sha256:8ee6c2243bacfb2ec1a0010a9b1bf41209330ae940c6f88fee9c9e99f9cb705d
-ARG           FROM_IMAGE_RUNTIME=base:runtime-bullseye-2021-11-01@sha256:c29f582f211999ba573b8010cdf623e695cc0570d2de6c980434269357a3f8ef
+ARG           FROM_IMAGE_FETCHER=base:golang-bullseye-2022-04-01@sha256:f8d1f21174380690d50f90e2729a7e9306e044bd04a65b4a58d91385998a3325
+ARG           FROM_IMAGE_BUILDER=base:builder-bullseye-2022-04-01@sha256:d73bb6ea84152c42e314bc9bff6388d0df6d01e277bd238ee0e6f8ade721856d
+ARG           FROM_IMAGE_AUDITOR=base:auditor-bullseye-2022-04-01@sha256:ca513bf0219f654afeb2d24aae233fef99cbcb01991aea64060f3414ac792b3f
+ARG           FROM_IMAGE_TOOLS=tools:linux-bullseye-2022-04-01@sha256:323f3e36da17d8638a07a656e2f17d5ee4dc2b17dfea7e2da36e1b2174cc5f18
+ARG           FROM_IMAGE_RUNTIME=base:runtime-bullseye-2022-04-01@sha256:6456b76dd2eedf34b4c5c997f9ad92901220dfdd405ec63419d0b54b6d85a777
 
 FROM          $FROM_REGISTRY/$FROM_IMAGE_TOOLS                                                                          AS builder-tools
 
@@ -14,6 +14,9 @@ ARG           GIT_REPO=github.com/caddyserver/caddy
 # 2.4.5 need tweak to scep (minor version bump), but then the build segfaults
 ARG           GIT_VERSION=v2.4.3
 ARG           GIT_COMMIT=9d4ed3a3236df06e54c80c4f6633b66d68ad3673
+# 2.4.6 segfaults
+#ARG           GIT_VERSION=v2.4.6
+#ARG           GIT_COMMIT=e7457b43e4703080ae8713ada798ce3e20b83690
 
 ENV           WITH_BUILD_SOURCE="./cmd/caddy"
 ENV           WITH_BUILD_OUTPUT="caddy"
@@ -21,7 +24,7 @@ ENV           WITH_BUILD_OUTPUT="caddy"
 ENV           CGO_ENABLED=1
 ENV           ENABLE_STATIC=true
 
-RUN           git clone --recurse-submodules git://"$GIT_REPO" .; git checkout "$GIT_COMMIT"
+RUN           git clone --recurse-submodules https://"$GIT_REPO" .; git checkout "$GIT_COMMIT"
 
 # scep v2.0.0 checksum does not match anymore
 # It's unclear whether the rename of the module to v2 is responsible, but one way or the other this
@@ -29,8 +32,10 @@ RUN           git clone --recurse-submodules git://"$GIT_REPO" .; git checkout "
 # RUN           echo "replace github.com/micromdm/scep/v2 v2.0.0 => github.com/micromdm/scep/v2 v2.1.0" >> go.mod
 
 ARG           GIT_REPO_REPLACE=github.com/caddyserver/replace-response
-ARG           GIT_VERSION_REPLACE=8fa6a90
-ARG           GIT_COMMIT_REPLACE=8fa6a90147d10fa192ad9fd1df2b97c1844ed322
+#ARG           GIT_VERSION_REPLACE=8fa6a90
+#ARG           GIT_COMMIT_REPLACE=8fa6a90147d10fa192ad9fd1df2b97c1844ed322
+ARG           GIT_VERSION=d32dc3f
+ARG           GIT_COMMIT_REPLACE=d32dc3ffff0c07a3c935ef33092803f90c55ba19
 
 RUN           echo "require $GIT_REPO_REPLACE $GIT_COMMIT_REPLACE" >> go.mod
 
