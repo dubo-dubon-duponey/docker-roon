@@ -110,6 +110,10 @@ RUN           tar -xjf bridge.tar.bz2
 RUN           rm bridge.tar.bz2
 RUN           ./RoonBridge/check.sh
 
+RUN           sed -i "s/\-\-debug//g" RoonBridge/Bridge/RAATServer
+RUN           sed -i "s/\-\-debug//g" RoonBridge/Bridge/RoonBridgeHelper
+RUN           sed -i "s/\-\-debug//g" RoonBridge/Bridge/RoonBridge
+
 # XXX do we NEED libasound?
 RUN           mkdir -p /dist/boot/lib; \
               eval "$(dpkg-architecture -A "$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/^armv6$/armel/" -e "s/^armv7$/armhf/" -e "s/^ppc64le$/ppc64el/" -e "s/^386$/i386/")")"; \
@@ -307,23 +311,11 @@ ENV           HEALTHCHECK_URL="http://127.0.0.1:10000/?healthcheck"
 HEALTHCHECK   --interval=120s --timeout=30s --start-period=10s --retries=1 CMD http-health || exit 1
 
 
-# Nov 3 2021 roon is moving to MS .NET in place of mono
-# At least libicu will need to be installed
-# Package: libicu67
-# Version: 67.1-7
-
-#libc6
-#libgcc1
-#libgssapi-krb5-2
-#libicu52 (for 8.x)
-#libicu57 (for 9.x)
-#libicu63 (for 10.x)
-#libicu67 (for 11.x)
-#libssl1.0.0 (for 8.x)
-#libssl1.1 (for 9.x-11.x)
-#libstdc++6
-#zlib1g
-
+# Roon is moving to MS
 # See https://docs.microsoft.com/en-us/dotnet/core/install/linux-debian
 # https://help.roonlabs.com/portal/en/kb/articles/linux-performance-improvements#Join_the_beta
+
+# We may be missing:
+#libgcc1
+#libgssapi-krb5-2
 
