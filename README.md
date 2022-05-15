@@ -1,6 +1,10 @@
 # What
 
-Two Docker images for Roon Bridge & Roon Server
+Two Docker images for Roon Bridge & Roon Server.
+
+Bonus / extra features:
+ * roon display is served over TLS and announced under mDNS
+ * logs are exposed on stdout
 
 ## Image features
 
@@ -31,7 +35,7 @@ docker run -d \
     --group-add audio \
     --device /dev/snd \
     --rm \
-    ghcr.io/dubo-dubon-duponey/roon-bridge
+    ghcr.io/dubo-dubon-duponey/roon:bridge-latest
 
 docker run -d \
     --net host \
@@ -39,10 +43,8 @@ docker run -d \
     --read-only \
     --cap-drop ALL \
     --cap-add NET_BIND_SERVICE \
-    --group-add audio \
-    --device /dev/snd \
     --rm \
-    ghcr.io/dubo-dubon-duponey/roon-server
+    ghcr.io/dubo-dubon-duponey/roon:server-latest
 ```
 
 ## GOTCHA
@@ -65,7 +67,7 @@ echo 1048576 > /proc/sys/fs/inotify/max_user_watches
 The builder uses the packages stored under `cache`.
 
 If you want to rebuild with fresh versions, call the `./refresh.sh` script first 
-to redownload from Roon servers.
+to (re)-download from Roon servers.
 
 ### Alpine
 
