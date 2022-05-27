@@ -6,6 +6,16 @@ Bonus / extra features:
  * roon display is served over TLS and announced under mDNS
  * logs are exposed on stdout
 
+## DISCLAIMER
+
+* this is an UNOFFICIAL image, and is NOT produced, endorsed nor supported by [Roon Labs](https://roonlabs.com/)
+* if you are a newcomer, if you expect any kind of support, or simply any guarantee that Roon will work, do yourself a huge favor: just use one of the [official Roon downloads](https://roonlabs.com/downloads)
+* if you are using this and have an issue with it, you are on your own
+* if you are still here, and plan on using this, and while we try to make this simple to use, you should still have some reasonable understanding and familiarity with:
+  * docker overall
+  * linux sound sub-system
+  * networking
+
 ## Image features
 
  * multi-architecture:
