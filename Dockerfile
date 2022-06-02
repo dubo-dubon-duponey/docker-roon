@@ -165,7 +165,7 @@ RUN           --mount=type=secret,uid=100,id=CA \
               apt-get install -qq --no-install-recommends \
                 bzip2=1.0.8-4 \
                 libasound2=1.2.4-1.1 \
-                ffmpeg=7:4.3.3-0+deb11u1 \
+                ffmpeg=7:4.3.4-0+deb11u1 \
                 cifs-utils=2:6.11-3.1
 
 WORKDIR       /dist/boot/bin
@@ -230,7 +230,7 @@ RUN           --mount=type=secret,uid=100,id=CA \
               --mount=type=secret,id=APT_CONFIG \
               apt-get update -qq \
               && apt-get install -qq --no-install-recommends \
-                ffmpeg=7:4.3.3-0+deb11u1 \
+                ffmpeg=7:4.3.4-0+deb11u1 \
               && apt-get -qq autoremove       \
               && apt-get -qq clean            \
               && rm -rf /var/lib/apt/lists/*  \
