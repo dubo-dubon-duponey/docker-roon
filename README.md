@@ -45,7 +45,7 @@ docker run -d \
     --group-add audio \
     --device /dev/snd \
     --rm \
-    ghcr.io/dubo-dubon-duponey/roon:bridge-latest
+    index.docker.io/dubodubonduponey/roon:bridge-latest
 
 docker run -d \
     --net host \
@@ -54,7 +54,7 @@ docker run -d \
     --cap-drop ALL \
     --cap-add NET_BIND_SERVICE \
     --rm \
-    ghcr.io/dubo-dubon-duponey/roon:server-latest
+    index.docker.io/dubodubonduponey/roon:server-latest
 ```
 
 ## GOTCHA
