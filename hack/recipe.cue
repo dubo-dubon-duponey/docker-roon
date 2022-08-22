@@ -11,7 +11,7 @@ cakes: {
 		recipe: {
 			input: {
 				from: {
-					registry: * "ghcr.io/dubo-dubon-duponey" | string
+					registry: * "index.docker.io/dubodubonduponey" | string
 				}
 			}
 
@@ -42,7 +42,7 @@ cakes: {
 		recipe: {
 			input: {
 				from: {
-					registry: * "ghcr.io/dubo-dubon-duponey" | string
+					registry: * "index.docker.io/dubodubonduponey" | string
 				}
 			}
 
