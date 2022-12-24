@@ -11,7 +11,7 @@ cakes: {
 		recipe: {
 			input: {
 				from: {
-					registry: * "index.docker.io/dubodubonduponey" | string
+					registry: * "docker.io/dubodubonduponey" | string
 				}
 			}
 
@@ -42,7 +42,7 @@ cakes: {
 		recipe: {
 			input: {
 				from: {
-					registry: * "index.docker.io/dubodubonduponey" | string
+					registry: * "docker.io/dubodubonduponey" | string
 				}
 			}
 
@@ -70,7 +70,7 @@ cakes: {
 
 injectors: {
 	suite: * "bullseye" | =~ "^(?:jessie|stretch|buster|bullseye|sid)$" @tag(suite, type=string)
-	date: * "2022-04-01" | =~ "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" @tag(date, type=string)
+	date: * "2022-12-01" | =~ "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" @tag(date, type=string)
 	platforms: string @tag(platforms, type=string)
 	registry: * "registry.local" | string @tag(registry, type=string)
 }
