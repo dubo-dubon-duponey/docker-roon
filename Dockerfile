@@ -1,10 +1,10 @@
 ARG           FROM_REGISTRY=docker.io/dubodubonduponey
 
-ARG           FROM_IMAGE_FETCHER=base:golang-bullseye-2022-12-01
-ARG           FROM_IMAGE_BUILDER=base:builder-bullseye-2022-12-01
-ARG           FROM_IMAGE_AUDITOR=base:auditor-bullseye-2022-12-01
-ARG           FROM_IMAGE_TOOLS=tools:linux-bullseye-2022-12-01
-ARG           FROM_IMAGE_RUNTIME=base:runtime-bullseye-2022-12-01
+ARG           FROM_IMAGE_FETCHER=base:golang-bookworm-2023-09-01
+ARG           FROM_IMAGE_BUILDER=base:builder-bookworm-2023-09-01
+ARG           FROM_IMAGE_AUDITOR=base:auditor-bookworm-2023-09-01
+ARG           FROM_IMAGE_TOOLS=tools:linux-bookworm-2023-09-01
+ARG           FROM_IMAGE_RUNTIME=base:runtime-bookworm-2023-09-01
 
 FROM          $FROM_REGISTRY/$FROM_IMAGE_TOOLS                                                                          AS builder-tools
 
@@ -20,8 +20,8 @@ ARG           GIT_REPO=github.com/caddyserver/caddy
 #ARG           GIT_COMMIT=e7457b43e4703080ae8713ada798ce3e20b83690
 #ARG           GIT_VERSION=v2.5.2
 #ARG           GIT_COMMIT=ad3a83fb9169899226ce12a61c16b5bf4d03c482
-ARG           GIT_VERSION=v2.6.2
-ARG           GIT_COMMIT=6bad878a22e048762262d6fabe2144cefaf4ca81
+ARG           GIT_VERSION=v2.7.4
+ARG           GIT_COMMIT=f11c3c9f5a1be082450d64369853e1dacda22dde
 
 ENV           WITH_BUILD_SOURCE="./cmd/caddy"
 ENV           WITH_BUILD_OUTPUT="caddy"
@@ -39,8 +39,8 @@ RUN           git clone --recurse-submodules https://"$GIT_REPO" .; git checkout
 ARG           GIT_REPO_REPLACE=github.com/caddyserver/replace-response
 #ARG           GIT_VERSION_REPLACE=8fa6a90
 #ARG           GIT_COMMIT_REPLACE=8fa6a90147d10fa192ad9fd1df2b97c1844ed322
-ARG           GIT_VERSION=dcc1c7c
-ARG           GIT_COMMIT_REPLACE=dcc1c7c3e67225d65211176e06d7da40abb96449
+ARG           GIT_VERSION=d7523f4
+ARG           GIT_COMMIT_REPLACE=d7523f42f84a2fa09d64c957f1e6795ece355425
 
 RUN           echo "require $GIT_REPO_REPLACE $GIT_COMMIT_REPLACE" >> go.mod
 
@@ -104,8 +104,8 @@ RUN           --mount=type=secret,uid=100,id=CA \
               --mount=type=secret,id=APT_CONFIG \
               apt-get update -qq && \
               apt-get install -qq --no-install-recommends \
-                bzip2=1.0.8-4 \
-                libasound2=1.2.4-1.1
+                bzip2=1.0.8-5+b1 \
+                libasound2=1.2.8-1+b1
               # \
 #                libicu67=67.1-7
 
@@ -168,10 +168,10 @@ RUN           --mount=type=secret,uid=100,id=CA \
               --mount=type=secret,id=APT_CONFIG \
               apt-get update -qq && \
               apt-get install -qq --no-install-recommends \
-                bzip2=1.0.8-4 \
-                libasound2=1.2.4-1.1 \
-                ffmpeg=7:4.3.5-0+deb11u1 \
-                cifs-utils=2:6.11-3.1+deb11u1
+                bzip2=1.0.8-5+b1 \
+                libasound2=1.2.8-1+b1 \
+                ffmpeg=7:5.1.3-1 \
+                cifs-utils=2:7.0-2
 
 WORKDIR       /dist/boot/bin
 COPY          "./cache/linux/amd64/server.tar.bz2" .
@@ -228,7 +228,7 @@ FROM          $FROM_REGISTRY/$FROM_IMAGE_RUNTIME                                
 USER          root
 
 # Removing this will prevent the RoonServer from using audio devices, hence making the use of RaatBridges mandatory (which is fine)
-#                libasound2=1.2.4-1.1 \
+#                libasound2=1.2.8-1+b1 \
 RUN           --mount=type=secret,uid=100,id=CA \
               --mount=type=secret,uid=100,id=CERTIFICATE \
               --mount=type=secret,uid=100,id=KEY \
@@ -238,7 +238,7 @@ RUN           --mount=type=secret,uid=100,id=CA \
               --mount=type=secret,id=APT_CONFIG \
               apt-get update -qq \
               && apt-get install -qq --no-install-recommends \
-                ffmpeg=7:4.3.5-0+deb11u1 \
+                ffmpeg=7:5.1.3-1 \
               && apt-get -qq autoremove       \
               && apt-get -qq clean            \
               && rm -rf /var/lib/apt/lists/*  \

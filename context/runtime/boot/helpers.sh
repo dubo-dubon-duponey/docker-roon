@@ -73,7 +73,7 @@ start::sidecar(){
   CDY_PORT_HTTP="${ADVANCED_PORT_HTTP:-80}" \
   CDY_PORT_HTTPS="${ADVANCED_PORT_HTTPS:-443}" \
   CDY_ACME_CA="$TLS_SERVER" \
-    caddy run -config /config/caddy/main.conf --adapter caddyfile "$@"
+    caddy run --config /config/caddy/main.conf --adapter caddyfile "$@"
 }
 
 # Helpers
