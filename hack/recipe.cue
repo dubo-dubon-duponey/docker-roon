@@ -20,7 +20,6 @@ cakes: {
 				platforms: [
 					types.#Platforms.#AMD64,
 					types.#Platforms.#ARM64,
-					// types.#Platforms.#V7,
 				]
 			}
 
