@@ -7,9 +7,14 @@ readonly root
 source "$root/helpers.sh"
 # shellcheck source=/dev/null
 source "$root/mdns.sh"
+# shellcheck source=/dev/null
+source "$root/http.sh"
 
 helpers::dir::writable "/tmp"
-helpers::dir::writable "/data"
+
+helpers::dir::writable "$XDG_DATA_HOME" create
+helpers::dir::writable "$XDG_DATA_DIRS" create
+
 helpers::dir::writable "$ROON_ID_DIR" create
 helpers::dir::writable "$ROON_DATAROOT" create
 
@@ -43,16 +48,17 @@ helpers::dir::writable "$XDG_RUNTIME_DIR" create
 helpers::dir::writable "$XDG_STATE_HOME" create
 helpers::dir::writable "$XDG_CACHE_HOME" create
 
-# mDNS blast if asked to
-[ "${MDNS_ENABLED:-}" != true ] || {
-  _mdns_port="$([ "$TLS" != "" ] && printf "%s" "${ADVANCED_PORT_HTTPS:-443}" || printf "%s" "${ADVANCED_PORT_HTTP:-80}")"
-  [ ! "${MDNS_STATION:-}" ] || mdns::records::add "_workstation._tcp" "$MDNS_HOST" "${MDNS_NAME:-}" "$_mdns_port"
-  mdns::records::add "${MDNS_TYPE:-_http._tcp}" "$MDNS_HOST" "${MDNS_NAME:-}" "$_mdns_port"
-  mdns::records::broadcast &
+# mDNS
+[ "${MOD_MDNS_ENABLED:-}" != true ] || {
+  _mdns_type="${ADVANCED_MOD_MDNS_TYPE:-_http._tcp}"
+  _mdns_port="$([ "${MOD_HTTP_TLS_ENABLED:-}" == true ] && printf "%s" "${ADVANCED_MOD_HTTP_PORT:-443}" || printf "%s" "${ADVANCED_MOD_HTTP_PORT_INSECURE:-80}")"
+  [ "${ADVANCED_MOD_MDNS_STATION:-}" != true ] || mdns::records::add "_workstation._tcp" "${MOD_MDNS_HOST}" "${MOD_MDNS_NAME:-}" "$_mdns_port"
+  mdns::records::add "$_mdns_type" "${MOD_MDNS_HOST:-}" "${MOD_MDNS_NAME:-}" "$_mdns_port"
+  mdns::start::broadcaster &
 }
 
-# Start the sidecar
-[ "${PROXY_HTTPS_ENABLED:-}" != true ] || start::sidecar &
+# TLS and HTTP
+[ "${MOD_HTTP_ENABLED:-}" != true ] || http::start &
 
 # error”, “critical”, “warning”, “message”, “info”, and “debug”
 # Looks like ROON ignore these
