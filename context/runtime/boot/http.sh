@@ -44,7 +44,7 @@ http::start(){
 
   local secure=s
 
-  [ "$ADVANCED_MOD_HTTP_TLS_ENABLED" != true ] || {
+  [ "$ADVANCED_MOD_HTTP_TLS_ENABLED" == true ] || {
     disable_tls=true
     secure=
   }
