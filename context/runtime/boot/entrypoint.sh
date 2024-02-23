@@ -18,10 +18,29 @@ helpers::dir::writable "$XDG_DATA_DIRS" create
 helpers::dir::writable "$ROON_ID_DIR" create
 helpers::dir::writable "$ROON_DATAROOT" create
 
-# Get the main logs into stdout, whenever they are created
+LOG_LEVEL="${LOG_LEVEL:-}"
+normalized_log_level="$(printf "%s" "$LOG_LEVEL" | tr '[:upper:]' '[:lower:]')"
+case "$normalized_log_level" in
+  "debug")
+    reg="Trace"
+  ;;
+  "info")
+    reg="Trace|Debug"
+  ;;
+  "warning")
+    reg="Trace|Debug|Info"
+  ;;
+  "error")
+    reg="Trace|Debug|Warn"
+  ;;
+esac
+reg="^[0-9/: ]*(?:$reg)"
+
+# Get the main logs into stdout, whenever they are created - and artificially filter out...
 log::ingest(){
   local fd="$1"
-  tail -F "$fd"
+  # So... hide out whatever
+  tail -F "$fd" 2>/dev/null | grep -Pv "$reg"
 }
 
 # Get rid of the rotated logs,
