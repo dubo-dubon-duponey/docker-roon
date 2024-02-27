@@ -1,10 +1,10 @@
 ARG           FROM_REGISTRY=docker.io/dubodubonduponey
 
-ARG           FROM_IMAGE_FETCHER=base:golang-bookworm-2023-09-05
-ARG           FROM_IMAGE_BUILDER=base:builder-bookworm-2023-09-05
-ARG           FROM_IMAGE_AUDITOR=base:auditor-bookworm-2023-09-05
-ARG           FROM_IMAGE_TOOLS=tools:linux-bookworm-2023-09-05
-ARG           FROM_IMAGE_RUNTIME=base:runtime-bookworm-2023-09-05
+ARG           FROM_IMAGE_FETCHER=base:golang-bookworm-2024-02-20
+ARG           FROM_IMAGE_BUILDER=base:builder-bookworm-2024-02-20
+ARG           FROM_IMAGE_AUDITOR=base:auditor-bookworm-2024-02-20
+ARG           FROM_IMAGE_TOOLS=tools:linux-bookworm-2024-02-20
+ARG           FROM_IMAGE_RUNTIME=base:runtime-bookworm-2024-02-20
 
 FROM          $FROM_REGISTRY/$FROM_IMAGE_TOOLS                                                                          AS builder-tools
 
@@ -20,8 +20,8 @@ ARG           GIT_REPO=github.com/caddyserver/caddy
 #ARG           GIT_COMMIT=e7457b43e4703080ae8713ada798ce3e20b83690
 #ARG           GIT_VERSION=v2.5.2
 #ARG           GIT_COMMIT=ad3a83fb9169899226ce12a61c16b5bf4d03c482
-ARG           GIT_VERSION=v2.7.4
-ARG           GIT_COMMIT=f11c3c9f5a1be082450d64369853e1dacda22dde
+ARG           GIT_VERSION=v2.7.6
+ARG           GIT_COMMIT=6d9a83376b5e19b3c0368541ee46044ab284038b
 
 ENV           WITH_BUILD_SOURCE="./cmd/caddy"
 ENV           WITH_BUILD_OUTPUT="caddy"
@@ -170,7 +170,7 @@ RUN           --mount=type=secret,uid=100,id=CA \
               apt-get install -qq --no-install-recommends \
                 bzip2=1.0.8-5+b1 \
                 libasound2=1.2.8-1+b1 \
-                ffmpeg=7:5.1.3-1 \
+                ffmpeg=7:5.1.4-0+deb12u1 \
                 cifs-utils=2:7.0-2
 
 WORKDIR       /dist/boot/bin
@@ -238,7 +238,7 @@ RUN           --mount=type=secret,uid=100,id=CA \
               --mount=type=secret,id=APT_CONFIG \
               apt-get update -qq \
               && apt-get install -qq --no-install-recommends \
-                ffmpeg=7:5.1.3-1 \
+                ffmpeg=7:5.1.4-0+deb12u1 \
               && apt-get -qq autoremove       \
               && apt-get -qq clean            \
               && rm -rf /var/lib/apt/lists/*  \
