@@ -2,37 +2,34 @@
 
 Two Docker images for Roon Bridge & Roon Server.
 
-Bonus / extra features:
+Additionally:
  * roon display is served over TLS and announced under mDNS
  * logs are exposed on stdout
 
 ## DISCLAIMER
 
 * this is an UNOFFICIAL image, and is NOT produced, endorsed nor supported by [Roon Labs](https://roonlabs.com/)
-* if you are a newcomer, if you expect any kind of support, or simply any guarantee that Roon will work, do yourself a huge favor: just use one of the [official Roon downloads](https://roonlabs.com/downloads)
-* if you are using this and have an issue with it, you are on your own
-* if you are still here, and plan on using this, and while we try to make this simple to use, you should still have some reasonable understanding and familiarity with:
-  * docker overall
-  * linux sound sub-system
-  * networking
+* most people should just use one of the [official Roon downloads](https://roonlabs.com/downloads)
+* tinkerers, you are welcome
 
 ## Image features
 
  * multi-architecture:
     * [x] linux/amd64
     * [x] linux/arm64 (bridge only)
-    * [x] linux/arm/v7 (bridge only)
  * hardened:
     * [x] image runs read-only
     * [x] image runs with no capabilities
     * [x] process runs as a non-root user, disabled login, no shell
  * lightweight
-    * [x] based on our slim [Debian Bullseye](https://github.com/dubo-dubon-duponey/docker-debian)
+    * [x] based on our slim [Debian Bookworm](https://github.com/dubo-dubon-duponey/docker-debian)
     * [x] simple entrypoint script
-    * [ ] multi-stage build with no installed dependencies for the Bridge runtime image, one dependency for Server (ffmpeg)
+    * [x] multi-stage build with zero packages installed in the runtime image (for the bridge)
+    * [ ] multi-stage build with ~~zero packages~~ `ffmpeg` installed in the runtime image (for the server)
  * observable
     * [ ] healthcheck (server only)
     * [x] log to stdout
+    * [ ] ~~prometheus endpoint~~
 
 ## Run
 
@@ -59,7 +56,8 @@ docker run -d \
 
 ## GOTCHA
 
-Debian by default limits inotify watches to 8192, which might turns out to be too little.
+Debian by default limits inotify watches to 8192, which might turns out to be too little
+for the server.
 
 You probably want to bump that up to prevent your system from crashing / rebooting...
 
