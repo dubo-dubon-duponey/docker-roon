@@ -39,8 +39,8 @@ RUN           git clone --recurse-submodules https://"$GIT_REPO" .; git checkout
 ARG           GIT_REPO_REPLACE=github.com/caddyserver/replace-response
 #ARG           GIT_VERSION_REPLACE=8fa6a90
 #ARG           GIT_COMMIT_REPLACE=8fa6a90147d10fa192ad9fd1df2b97c1844ed322
-ARG           GIT_VERSION=d7523f4
-ARG           GIT_COMMIT_REPLACE=d7523f42f84a2fa09d64c957f1e6795ece355425
+ARG           GIT_VERSION=a85d4dd
+ARG           GIT_COMMIT_REPLACE=a85d4ddc11d635c093074205bd32f56d05fc7811
 
 RUN           echo "require $GIT_REPO_REPLACE $GIT_COMMIT_REPLACE" >> go.mod
 
