@@ -60,6 +60,7 @@ if [ ! -e /boot/bin/RoonServer/Server/RoonServer ]; then
   exit
 fi
 
+# shellcheck disable=SC2015
 [ "${MOD_HTTP_ENABLED:-}" != true ] && [ "${MOD_TLS_ENABLED:-}" != true ] || {
   helpers::dir::writable "/certs"
 }
