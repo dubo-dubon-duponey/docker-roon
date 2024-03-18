@@ -60,26 +60,47 @@ if [ ! -e /boot/bin/RoonServer/Server/RoonServer ]; then
   exit
 fi
 
-helpers::dir::writable "/certs"
+[ "${MOD_HTTP_ENABLED:-}" != true ] && [ "${MOD_TLS_ENABLED:-}" != true ] || {
+  helpers::dir::writable "/certs"
+}
+
 helpers::dir::writable "$XDG_RUNTIME_DIR" create
 helpers::dir::writable "$XDG_STATE_HOME" create
 helpers::dir::writable "$XDG_CACHE_HOME" create
 
-# mDNS
-[ "${MOD_MDNS_ENABLED:-}" != true ] || {
-  _mdns_type="${ADVANCED_MOD_MDNS_TYPE:-_http._tcp}"
-  _mdns_port="$([ "${MOD_HTTP_TLS_ENABLED:-}" == true ] && printf "%s" "${ADVANCED_MOD_HTTP_PORT:-443}" || printf "%s" "${ADVANCED_MOD_HTTP_PORT_INSECURE:-80}")"
-  [ "${ADVANCED_MOD_MDNS_STATION:-}" != true ] || mdns::records::add "_workstation._tcp" "${MOD_MDNS_HOST}" "${MOD_MDNS_NAME:-}" "$_mdns_port"
-  mdns::records::add "$_mdns_type" "${MOD_MDNS_HOST:-}" "${MOD_MDNS_NAME:-}" "$_mdns_port"
-  mdns::start::broadcaster
-}
+# HTTP helpers
+if [ "$MOD_HTTP_ENABLED" == true ]; then
+  case "${1:-}" in
+    # Short hand helper to generate password hash
+    "hash")
+      shift
+      http::hash "$@"
+      exit
+    ;;
+    # Helper to get the ca.crt out (once initialized)
+    "cert")
+      shift
+      http::certificate "${MOD_HTTP_TLS_MODE:-internal}" "$@"
+      exit
+    ;;
+  esac
+  http::start &
+fi
 
-# TLS and HTTP
-[ "${MOD_HTTP_ENABLED:-}" != true ] || http::start &
+[ "${MOD_MDNS_ENABLED:-}" != true ] || \
+  mdns::start::default \
+    "${MOD_MDNS_HOST:-}" \
+    "${MOD_MDNS_NAME:-}" \
+    "${MOD_HTTP_ENABLED:-}" \
+    "${MOD_HTTP_TLS_ENABLED:-}" \
+    "${MOD_TLS_ENABLED:-}" \
+    "${ADVANCED_MOD_MDNS_STATION:-}" \
+    "${ADVANCED_MOD_MDNS_TYPE:-}" \
+    "${ADVANCED_MOD_HTTP_PORT:-}" \
+    "${ADVANCED_MOD_HTTP_PORT_INSECURE:-}" \
+    "${ADVANCED_MOD_TLS_PORT:-}"
 
-# error”, “critical”, “warning”, “message”, “info”, and “debug”
 # Looks like ROON ignore these
 #MONO_LOG_LEVEL="$(printf "%s" "${LOG_LEVEL:-error}" | tr '[:upper:]' '[:lower:]' | sed -E 's/^(warn)$/warning/')"
 #export MONO_LOG_LEVEL
-
 exec /boot/bin/RoonServer/Server/RoonServer "$@"
