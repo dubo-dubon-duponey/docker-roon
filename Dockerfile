@@ -253,7 +253,7 @@ EXPOSE        9003/udp
 VOLUME        /music
 
 ENV           _SERVICE_NICK="roon"
-ENV           _SERVICE_TYPE="http"
+ENV           _SERVICE_TYPE="_http._tcp"
 
 COPY          --from=assembly --chown=$BUILD_UID:root /dist /
 
@@ -306,7 +306,7 @@ ENV           MOD_HTTP_TLS_MODE="internal"
 # Advanced settings
 #####
 # Service type
-ENV           ADVANCED_MOD_MDNS_TYPE="_$_SERVICE_TYPE._tcp"
+ENV           ADVANCED_MOD_MDNS_TYPE="$_SERVICE_TYPE"
 # Also announce the service as a workstation (for example for the benefit of coreDNS mDNS)
 ENV           ADVANCED_MOD_MDNS_STATION=true
 # Root certificate to trust for client cert verification
