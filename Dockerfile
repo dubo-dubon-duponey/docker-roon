@@ -147,11 +147,10 @@ COPY          --from=assembly-bridge --chown=$BUILD_UID:root  /dist /
 # Alternative is rpathing, but what exactly?
 ENV           LD_LIBRARY_PATH=/boot/lib
 
-ENV           ROON_DATAROOT=/data/data_root
-ENV           ROON_ID_DIR=/data/id_dir
+ENV           ROON_DATAROOT="$XDG_DATA_HOME"/roon/data
+ENV           ROON_ID_DIR="$XDG_DATA_HOME"/roon/id
 
-VOLUME        /data
-VOLUME        /tmp
+VOLUME        "$XDG_DATA_HOME"
 
 ##########################
 # Building image server
@@ -247,10 +246,8 @@ RUN           --mount=type=secret,uid=100,id=CA \
 
 USER          dubo-dubon-duponey
 
-ENV           ROON_DATAROOT=/data/data_root
-ENV           ROON_ID_DIR=/data/id_dir
-EXPOSE        9003/udp
-VOLUME        /music
+ENV           ROON_DATAROOT="$XDG_DATA_HOME"/roon/data
+ENV           ROON_ID_DIR="$XDG_DATA_HOME"/roon/id
 
 ENV           _SERVICE_NICK="roon"
 ENV           _SERVICE_TYPE="_http._tcp"
@@ -338,13 +335,10 @@ ENV           ADVANCED_MOD_HTTP_ADDITIONAL_DOMAINS=""
 #####
 EXPOSE        443
 EXPOSE        80
+EXPOSE        9003/udp
 
-# Caddy certs will be stored here
-VOLUME        /certs
-# Caddy uses this
-VOLUME        /tmp
-# Used by the backend service
-VOLUME        /data
+VOLUME        "$XDG_DATA_HOME"
+VOLUME        /music
 
 ENV           HEALTHCHECK_URL="http://127.0.0.1:10000/?healthcheck"
 

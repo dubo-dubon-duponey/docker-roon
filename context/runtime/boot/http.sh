@@ -27,11 +27,11 @@ http::certificate(){
     printf >&2 "Your container uses letsencrypt - there is no local CA in that case."
     exit 1
   fi
-  if [ ! -e /certs/pki/authorities/local/root.crt ]; then
+  if [ ! -e "$XDG_DATA_HOME"/certs/pki/authorities/local/root.crt ]; then
     printf >&2 "No root certificate installed or generated. Run the container so that a cert is generated, or provide one at runtime."
     exit 1
   fi
-  cat /certs/pki/authorities/local/root.crt
+  cat "$XDG_DATA_HOME"/certs/pki/authorities/local/root.crt
 }
 
 http::start(){
@@ -69,6 +69,6 @@ http::start(){
   CDY_PORT_HTTPS="${ADVANCED_MOD_HTTP_PORT:-$_default_https_port}" \
   CDY_TLS_MIN="${ADVANCED_MOD_HTTP_TLS_MIN:-$_default_tls_min}" \
   CDY_SERVER_NAME="${ADVANCED_MOD_HTTP_SERVER_NAME:-$_default_server_name}" \
-    caddy run --config /config/caddy/main.conf --adapter caddyfile "$@"
+    caddy run --config "$XDG_CONFIG_DIRS"/caddy/main.conf --adapter caddyfile "$@"
 }
 
