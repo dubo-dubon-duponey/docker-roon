@@ -10,8 +10,6 @@ readonly root
 # shellcheck source=/dev/null
 . "$root/http.sh"
 
-helpers::dir::writable "/tmp"
-
 helpers::dir::writable "$XDG_DATA_HOME" create
 
 helpers::dir::writable "$ROON_ID_DIR" create
@@ -55,6 +53,8 @@ log::ingest "$ROON_DATAROOT/RAATServer/Logs/RAATServer_log.txt" &
 log::clean 86400 &
 
 if [ ! -e /boot/bin/RoonServer/Server/RoonServer ]; then
+  helpers::dir::writable "/tmp"
+
   exec /boot/bin/RoonBridge/Bridge/RoonBridge "$@"
   exit
 fi
