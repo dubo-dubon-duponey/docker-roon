@@ -150,7 +150,11 @@ ENV           LD_LIBRARY_PATH=/boot/lib
 ENV           ROON_DATAROOT="$XDG_DATA_HOME"/roon/data
 ENV           ROON_ID_DIR="$XDG_DATA_HOME"/roon/id
 
+# RAAT insist on using /tmp to write a lock file
+VOLUME        /tmp
+# Persist the roon id here so that raat servers are persisted overtime in roon server
 VOLUME        "$XDG_DATA_HOME"
+
 
 ##########################
 # Building image server
