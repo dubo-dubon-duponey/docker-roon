@@ -13,7 +13,6 @@ readonly root
 helpers::dir::writable "/tmp"
 
 helpers::dir::writable "$XDG_DATA_HOME" create
-helpers::dir::writable "$XDG_DATA_DIRS" create
 
 helpers::dir::writable "$ROON_ID_DIR" create
 helpers::dir::writable "$ROON_DATAROOT" create
