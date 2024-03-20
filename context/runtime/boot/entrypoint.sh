@@ -42,7 +42,7 @@ log::ingest(){
 log::clean(){
   local frequency="$1"
   while true; do
-    find ./data/ -iname "*log.*.txt" -exec rm {} \;
+    find "$XDG_DATA_HOME"/roon/data/ -iname "*log.*.txt" -exec rm {} \;
     sleep "$frequency"
   done
 }
