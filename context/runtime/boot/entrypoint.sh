@@ -10,52 +10,65 @@ readonly root
 # shellcheck source=/dev/null
 . "$root/http.sh"
 
-helpers::dir::writable "$XDG_DATA_HOME" create
+export ROON_ID_DIR="$XDG_DATA_HOME"/roon/id
+export ROON_DATAROOT="$XDG_DATA_HOME"/roon/data
 
 helpers::dir::writable "$ROON_ID_DIR" create
 helpers::dir::writable "$ROON_DATAROOT" create
 
 case "$LOG_LEVEL" in
   "debug")
-    reg="Trace"
+    reg="Trace:"
   ;;
   "info")
-    reg="Trace|Debug"
+    reg="Trace:|Debug:"
   ;;
   "warning")
-    reg="Trace|Debug|Info"
+    reg="Trace:|Debug:|Info:"
   ;;
   "error")
-    reg="Trace|Debug|Warn"
+    reg="Trace:|Debug:|Info:|Warn:"
   ;;
 esac
 reg="^[0-9/: ]*(?:$reg)"
 
-# Get the main logs into stdout, whenever they are created - and artificially filter out...
+# Get the main logs from the files, whenever they are created - and artificially filter out and clean=up...
 log::ingest(){
   local fd="$1"
   # So... hide out whatever
-  tail -F "$fd" 2>/dev/null | grep -Pv "$reg"
+  tail -F "$fd" 2>/dev/null | grep -Pv "$reg" | sed -e 's/^[0-9:/. ]*//' -E -e 's/^(Trace|Debug|Info|Warn):[ ]*//'
 }
 
 # Get rid of the rotated logs,
 log::clean(){
   local frequency="$1"
   while true; do
-    find "$XDG_DATA_HOME"/roon/data/ -iname "*log.*.txt" -exec rm {} \;
+    find "$ROON_DATAROOT" -iname "*log.*.txt" -exec rm {} \;
     sleep "$frequency"
   done
 }
 
-log::ingest "$ROON_DATAROOT/RoonServer/Logs/RoonServer_log.txt" &
-log::ingest "$ROON_DATAROOT/RoonBridge/Logs/RoonBridge_log.txt" &
-log::ingest "$ROON_DATAROOT/RAATServer/Logs/RAATServer_log.txt" &
+{
+  log::ingest "$ROON_DATAROOT/RoonServer/Logs/RoonServer_log.txt"
+} > >(helpers::logger::slurp "$LOG_LEVEL")
+
+{
+  log::ingest "$ROON_DATAROOT/RoonServer/Logs/RoonBridge_log.txt"
+} > >(helpers::logger::slurp "$LOG_LEVEL")
+
+{
+  log::ingest "$ROON_DATAROOT/RoonServer/Logs/RAATServer_log.txt"
+} > >(helpers::logger::slurp "$LOG_LEVEL")
+
 log::clean 86400 &
 
 if [ ! -e /boot/bin/RoonServer/Server/RoonServer ]; then
   helpers::dir::writable "/tmp"
 
-  exec /boot/bin/RoonBridge/Bridge/RoonBridge "$@"
+  {
+    exec /boot/bin/RoonBridge/Bridge/RoonBridge "$@" 2>&1
+  } > >(grep -Pv "$reg" | sed -e 's/^[0-9:/. ]*//' -E -e 's/^(Trace|Debug|Info|Warn):[ ]*//' | helpers::logger::slurp "$LOG_LEVEL" "[process-roon-bridge]")
+  # XXX should not be necessary
   exit
 fi
 
@@ -103,4 +116,18 @@ fi
 # Looks like ROON ignore these
 #MONO_LOG_LEVEL="$(printf "%s" "${LOG_LEVEL:-error}" | tr '[:upper:]' '[:lower:]' | sed -E 's/^(warn)$/warning/')"
 #export MONO_LOG_LEVEL
-exec /boot/bin/RoonServer/Server/RoonServer "$@"
+{
+  exec /boot/bin/RoonServer/Server/RoonServer "$@" 2>&1
+} > >(grep -Pv "$reg" | sed -e 's/^[0-9:/. ]*//' -E -e 's/^(Trace|Debug|Info|Warn):[ ]*//' | helpers::logger::slurp "$LOG_LEVEL" "[process-roon-server]")
+
+
+
+#Logging__LogLevel__Microsoft=Information
+#LogLevel	Value	Method	Description
+#Trace	0	LogTrace	Contain the most detailed messages. These messages may contain sensitive app data. These messages are disabled by default and should not be enabled in production.
+#Debug	1	LogDebug	For debugging and development. Use with caution in production due to the high volume.
+#Information	2	LogInformation	Tracks the general flow of the app. May have long-term value.
+#Warning	3	LogWarning	For abnormal or unexpected events. Typically includes errors or conditions that don't cause the app to fail.
+#Error	4	LogError	For errors and exceptions that cannot be handled. These messages indicate a failure in the current operation or request, not an app-wide failure.
+#Critical	5	LogCritical	For failures that require immediate attention. Examples: data loss scenarios, out of disk space.
+#None	6		Specifies that a logging category should not write any messages.

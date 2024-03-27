@@ -143,16 +143,18 @@ FROM          $FROM_REGISTRY/$FROM_IMAGE_RUNTIME                                
 
 COPY          --from=assembly-bridge --chown=$BUILD_UID:root  /dist /
 
-# XXX LD_LIBRARY_PATH are a liability when mixed with caps - so, watch out
-# Alternative is rpathing, but what exactly?
+# XXX LD_LIBRARY_PATH is a liability when mixed with caps - so, watch out
+# Alternative is rpathing, but what exactly in the distributable?
 ENV           LD_LIBRARY_PATH=/boot/lib
 
-ENV           ROON_DATAROOT="$XDG_DATA_HOME"/roon/data
-ENV           ROON_ID_DIR="$XDG_DATA_HOME"/roon/id
+USER          root
+RUN           rmdir /tmp; ln -s /magnetar/runtime /tmp
+USER          dubo-dubon-duponey
 
-# RAAT insist on using /tmp to write a lock file
-VOLUME        /tmp
-# Persist the roon id here so that raat servers are persisted overtime in roon server
+# Multicast communication
+EXPOSE        9003/udp
+
+VOLUME        "$XDG_RUNTIME_DIR"
 VOLUME        "$XDG_DATA_HOME"
 
 
@@ -186,9 +188,6 @@ RUN           ln -s dotnet /dist/boot/bin/RoonServer/RoonDotnet/RoonAppliance
 RUN           ln -s dotnet /dist/boot/bin/RoonServer/RoonDotnet/RAATServer
 
 RUN           ./RoonServer/check.sh
-#RUN           ln -s mono-sgen /dist/boot/bin/RoonServer/RoonMono/bin/RAATServer
-#RUN           ln -s mono-sgen /dist/boot/bin/RoonServer/RoonMono/bin/RoonAppliance
-#RUN           ln -s mono-sgen /dist/boot/bin/RoonServer/RoonMono/bin/RoonServer
 
 #######################
 # Builder assembly for server
@@ -249,9 +248,6 @@ RUN           --mount=type=secret,uid=100,id=CA \
               && rm -rf /var/tmp/*
 
 USER          dubo-dubon-duponey
-
-ENV           ROON_DATAROOT="$XDG_DATA_HOME"/roon/data
-ENV           ROON_ID_DIR="$XDG_DATA_HOME"/roon/id
 
 ENV           _SERVICE_NICK="roon"
 ENV           _SERVICE_TYPE="_http._tcp"
@@ -356,4 +352,3 @@ HEALTHCHECK   --interval=120s --timeout=30s --start-period=10s --retries=1 CMD h
 # We may be missing:
 #libgcc1
 #libgssapi-krb5-2
-
